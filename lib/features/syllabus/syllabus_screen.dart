@@ -482,27 +482,29 @@ class SyllabusScreen extends ConsumerWidget {
           'Add Syllabus Topic',
           style: GoogleFonts.inter(fontWeight: FontWeight.w700),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppTextField(
-              controller: subCtrl,
-              label: 'Subject',
-              hint: 'e.g. Mathematics',
-            ),
-            const SizedBox(height: 10),
-            AppTextField(
-              controller: chapCtrl,
-              label: 'Chapter',
-              hint: 'e.g. Calculus',
-            ),
-            const SizedBox(height: 10),
-            AppTextField(
-              controller: titleCtrl,
-              label: 'Topic Name',
-              hint: 'e.g. Integration by Parts',
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppTextField(
+                controller: subCtrl,
+                label: 'Subject',
+                hint: 'e.g. Mathematics',
+              ),
+              const SizedBox(height: 10),
+              AppTextField(
+                controller: chapCtrl,
+                label: 'Chapter',
+                hint: 'e.g. Calculus',
+              ),
+              const SizedBox(height: 10),
+              AppTextField(
+                controller: titleCtrl,
+                label: 'Topic Name',
+                hint: 'e.g. Integration by Parts',
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(

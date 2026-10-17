@@ -355,33 +355,35 @@ class _CareerScreenState extends ConsumerState<CareerScreen>
           'Track Job / Internship',
           style: GoogleFonts.inter(fontWeight: FontWeight.w700),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppTextField(
-              controller: compCtrl,
-              label: 'Company Name',
-              hint: 'e.g. Amazon',
-            ),
-            const SizedBox(height: 10),
-            AppTextField(
-              controller: roleCtrl,
-              label: 'Role / Designation',
-              hint: 'e.g. SDE Intern',
-            ),
-            const SizedBox(height: 10),
-            AppTextField(
-              controller: locCtrl,
-              label: 'Location',
-              hint: 'e.g. Bangalore / Remote',
-            ),
-            const SizedBox(height: 10),
-            AppTextField(
-              controller: notesCtrl,
-              label: 'Notes / Application Link',
-              hint: 'e.g. Applied via Career Portal',
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppTextField(
+                controller: compCtrl,
+                label: 'Company Name',
+                hint: 'e.g. Amazon',
+              ),
+              const SizedBox(height: 10),
+              AppTextField(
+                controller: roleCtrl,
+                label: 'Role / Designation',
+                hint: 'e.g. SDE Intern',
+              ),
+              const SizedBox(height: 10),
+              AppTextField(
+                controller: locCtrl,
+                label: 'Location',
+                hint: 'e.g. Bangalore / Remote',
+              ),
+              const SizedBox(height: 10),
+              AppTextField(
+                controller: notesCtrl,
+                label: 'Notes / Application Link',
+                hint: 'e.g. Applied via Career Portal',
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(

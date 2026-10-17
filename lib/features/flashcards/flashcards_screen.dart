@@ -239,27 +239,29 @@ class FlashcardsScreen extends ConsumerWidget {
             'Create Flashcard Deck',
             style: GoogleFonts.inter(fontWeight: FontWeight.w700),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppTextField(
-                controller: titleCtrl,
-                label: 'Deck Title',
-                hint: 'e.g. Organic Chemistry Reactions',
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                controller: subjectCtrl,
-                label: 'Subject',
-                hint: 'e.g. Chemistry',
-              ),
-              const SizedBox(height: 12),
-              AppTextField(
-                controller: descCtrl,
-                label: 'Description',
-                hint: 'e.g. Key mechanisms and reagents',
-              ),
-            ],
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppTextField(
+                  controller: titleCtrl,
+                  label: 'Deck Title',
+                  hint: 'e.g. Organic Chemistry Reactions',
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: subjectCtrl,
+                  label: 'Subject',
+                  hint: 'e.g. Chemistry',
+                ),
+                const SizedBox(height: 12),
+                AppTextField(
+                  controller: descCtrl,
+                  label: 'Description',
+                  hint: 'e.g. Key mechanisms and reagents',
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(

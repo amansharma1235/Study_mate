@@ -273,22 +273,30 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(
-                        doc.subject,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
+                      Flexible(
+                        child: Text(
+                          doc.subject,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '• ${doc.formattedSize} • ${doc.pageCount} Pages',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: isDark
-                              ? AppColors.textMutedDark
-                              : AppColors.textMutedLight,
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          '• ${doc.formattedSize} • ${doc.pageCount} Pages',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: isDark
+                                ? AppColors.textMutedDark
+                                : AppColors.textMutedLight,
+                          ),
                         ),
                       ),
                     ],
@@ -409,21 +417,23 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
           'Import Document / PDF',
           style: GoogleFonts.inter(fontWeight: FontWeight.w700),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppTextField(
-              controller: titleCtrl,
-              label: 'Document Title',
-              hint: 'e.g. Unit 3 Handwritten Notes',
-            ),
-            const SizedBox(height: 12),
-            AppTextField(
-              controller: subjectCtrl,
-              label: 'Subject',
-              hint: 'e.g. Computer Science',
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppTextField(
+                controller: titleCtrl,
+                label: 'Document Title',
+                hint: 'e.g. Unit 3 Handwritten Notes',
+              ),
+              const SizedBox(height: 12),
+              AppTextField(
+                controller: subjectCtrl,
+                label: 'Subject',
+                hint: 'e.g. Computer Science',
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(

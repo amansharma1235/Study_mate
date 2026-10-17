@@ -101,21 +101,23 @@ class _VoiceNotesScreenState extends ConsumerState<VoiceNotesScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Save Voice Note'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppTextField(
-              controller: titleCtrl,
-              label: 'Note Title',
-              hint: 'e.g. Chemistry Formula Recap',
-            ),
-            const SizedBox(height: 10),
-            AppTextField(
-              controller: subjectCtrl,
-              label: 'Subject',
-              hint: 'e.g. Chemistry',
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppTextField(
+                controller: titleCtrl,
+                label: 'Note Title',
+                hint: 'e.g. Chemistry Formula Recap',
+              ),
+              const SizedBox(height: 10),
+              AppTextField(
+                controller: subjectCtrl,
+                label: 'Subject',
+                hint: 'e.g. Chemistry',
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(

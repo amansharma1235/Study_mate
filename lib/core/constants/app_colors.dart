@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Brand Colors
-  static const Color primary = Color(0xFF6258E8);
-  static const Color primaryVariant = Color(0xFF4C42D0);
-  static const Color primaryLight = Color(0xFFEBE9FC);
-  static const Color secondary = Color(0xFF3987F5);
-  static const Color secondaryLight = Color(0xFFE7F0FE);
+  // Brand Colors - Deep Indigo & Refined Teal (Human-Crafted Palette)
+  static const Color primary = Color(0xFF4F46E5);
+  static const Color primaryVariant = Color(0xFF3730A3);
+  static const Color primaryLight = Color(0xFFEEF2FF);
+  static const Color secondary = Color(0xFF0D9488);
+  static const Color secondaryLight = Color(0xFFF0FDFA);
 
   // Backgrounds & Surfaces (Light)
-  static const Color backgroundLight = Color(0xFFF7F7FC);
+  static const Color backgroundLight = Color(0xFFF8FAFC);
   static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color cardLight = Color(0xFFFFFFFF);
-  static const Color borderLight = Color(0xFFE2E4F0);
+  static const Color borderLight = Color(0xFFE2E8F0);
 
   // Backgrounds & Surfaces (Dark)
   static const Color backgroundDark = Color(0xFF111827);

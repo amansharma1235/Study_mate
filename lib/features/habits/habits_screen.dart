@@ -272,7 +272,10 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Row(
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    runSpacing: 4,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -284,6 +287,7 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(
                               Icons.local_fire_department_rounded,
@@ -302,7 +306,6 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
                       Text(
                         'Target: ${habit.targetDaysPerWeek}d / wk',
                         style: TextStyle(
@@ -343,21 +346,23 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
           'Create Study Habit',
           style: GoogleFonts.inter(fontWeight: FontWeight.w700),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppTextField(
-              controller: titleCtrl,
-              label: 'Habit Title',
-              hint: 'e.g. Read 20 mins of textbook',
-            ),
-            const SizedBox(height: 10),
-            AppTextField(
-              controller: descCtrl,
-              label: 'Description',
-              hint: 'e.g. Daily revision before sleep',
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppTextField(
+                controller: titleCtrl,
+                label: 'Habit Title',
+                hint: 'e.g. Read 20 mins of textbook',
+              ),
+              const SizedBox(height: 10),
+              AppTextField(
+                controller: descCtrl,
+                label: 'Description',
+                hint: 'e.g. Daily revision before sleep',
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(

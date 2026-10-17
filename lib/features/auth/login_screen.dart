@@ -309,8 +309,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
                       ActionChip(
                         avatar: const CircleAvatar(
@@ -333,7 +335,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 await _handleLogin();
                               },
                       ),
-                      const SizedBox(width: 10),
                       ActionChip(
                         avatar: const CircleAvatar(
                           backgroundColor: AppColors.secondary,

@@ -297,27 +297,29 @@ class _StudyGroupsScreenState extends ConsumerState<StudyGroupsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Create Study Group'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppTextField(
-              controller: nameCtrl,
-              label: 'Group Name',
-              hint: 'e.g. Algorithms Study Circle',
-            ),
-            const SizedBox(height: 10),
-            AppTextField(
-              controller: subCtrl,
-              label: 'Subject',
-              hint: 'e.g. Computer Science',
-            ),
-            const SizedBox(height: 10),
-            AppTextField(
-              controller: descCtrl,
-              label: 'Description',
-              hint: 'e.g. Weekly problem discussions',
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppTextField(
+                controller: nameCtrl,
+                label: 'Group Name',
+                hint: 'e.g. Algorithms Study Circle',
+              ),
+              const SizedBox(height: 10),
+              AppTextField(
+                controller: subCtrl,
+                label: 'Subject',
+                hint: 'e.g. Computer Science',
+              ),
+              const SizedBox(height: 10),
+              AppTextField(
+                controller: descCtrl,
+                label: 'Description',
+                hint: 'e.g. Weekly problem discussions',
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(

@@ -517,30 +517,32 @@ class _FlashcardReviewScreenState extends ConsumerState<FlashcardReviewScreen>
                   context: context,
                   builder: (ctx) => AlertDialog(
                     title: const Text('Add Flashcard'),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextField(
-                          controller: frontCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Front (Question)',
+                    content: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
+                            controller: frontCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Front (Question)',
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: backCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Back (Answer)',
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: backCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Back (Answer)',
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: hintCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Hint (Optional)',
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: hintCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Hint (Optional)',
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     actions: [
                       TextButton(
