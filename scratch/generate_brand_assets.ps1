@@ -107,6 +107,25 @@ function Draw-StudyMateLogo {
     # 7. Center Spine Divider
     $g.DrawLine($spinePen, 256, 322, 256, 414)
 
+    # 8. Brand Badge with "STUDY MATE" text directly on logo
+    $badgeRect = New-Object System.Drawing.RectangleF(116, 426, 280, 50)
+    $bRadius = 25.0
+    $bPath = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $bDia = $bRadius * 2
+    $bPath.AddArc(116, 426, $bDia, $bDia, 180, 90)
+    $bPath.AddArc(116 + 280 - $bDia, 426, $bDia, $bDia, 270, 90)
+    $bPath.AddArc(116 + 280 - $bDia, 426 + 50 - $bDia, $bDia, $bDia, 0, 90)
+    $bPath.AddArc(116, 426 + 50 - $bDia, $bDia, $bDia, 90, 90)
+    $bPath.CloseFigure()
+    $g.FillPath($whiteBrush, $bPath)
+
+    $logoFont = New-Object System.Drawing.Font("Arial", 22, [System.Drawing.FontStyle]::Bold)
+    $logoTextBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(255, 0x4F, 0x46, 0xE5))
+    $sf = New-Object System.Drawing.StringFormat
+    $sf.Alignment = [System.Drawing.StringAlignment]::Center
+    $sf.LineAlignment = [System.Drawing.StringAlignment]::Center
+    $g.DrawString("STUDY MATE", $logoFont, $logoTextBrush, $badgeRect, $sf)
+
     $g.Restore($state)
 }
 

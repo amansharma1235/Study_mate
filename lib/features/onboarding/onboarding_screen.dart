@@ -68,13 +68,59 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           child: Column(
             children: [
-              // Top Spacing or Logo Header
-              const SizedBox(height: 12),
-              Image.asset(
-                'assets/branding/studymate_logo.png',
-                width: 44,
-                height: 44,
+              // Top Brand Header
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.28),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.asset(
+                        'assets/branding/studymate_logo.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Study',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
+                          color: isDark ? Colors.white : const Color(0xFF1E2134),
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      Text(
+                        'Mate',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20,
+                          color: AppColors.primary,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
+              const SizedBox(height: 8),
 
               // Page View
               Expanded(

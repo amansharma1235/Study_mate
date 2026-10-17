@@ -91,34 +91,47 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
           ),
           child: Column(
             children: [
-              // Mode Selector Tabs
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildModeTab(
-                    'Focus',
-                    PomodoroMode.focus,
-                    timerState.mode,
-                    controller,
-                    isDark,
+              // Modern Segmented Mode Selector Tabs
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.surfaceDark : const Color(0xFFF1F3F9),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                  border: Border.all(
+                    color: isDark ? AppColors.borderDark : AppColors.borderLight,
                   ),
-                  const SizedBox(width: 8),
-                  _buildModeTab(
-                    'Short Break',
-                    PomodoroMode.shortBreak,
-                    timerState.mode,
-                    controller,
-                    isDark,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildModeTab(
-                    'Long Break',
-                    PomodoroMode.longBreak,
-                    timerState.mode,
-                    controller,
-                    isDark,
-                  ),
-                ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildModeTab(
+                        'Focus',
+                        PomodoroMode.focus,
+                        timerState.mode,
+                        controller,
+                        isDark,
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildModeTab(
+                        'Short Break',
+                        PomodoroMode.shortBreak,
+                        timerState.mode,
+                        controller,
+                        isDark,
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildModeTab(
+                        'Long Break',
+                        PomodoroMode.longBreak,
+                        timerState.mode,
+                        controller,
+                        isDark,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: AppDimensions.space20),
 
@@ -375,29 +388,38 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
     final isSelected = mode == current;
     return GestureDetector(
       onTap: () => controller.setMode(mode),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
+        alignment: Alignment.center,
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.primary
-              : (isDark ? AppColors.surfaceDark : Colors.white),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : (isDark ? AppColors.borderDark : AppColors.borderLight),
-          ),
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected
-                ? Colors.white
-                : (isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textPrimaryLight),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+              color: isSelected
+                  ? Colors.white
+                  : (isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textPrimaryLight),
+            ),
           ),
         ),
       ),

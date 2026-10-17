@@ -246,118 +246,133 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
                 margin: const EdgeInsets.only(bottom: 10),
                 child: AppCard(
                   padding: const EdgeInsets.all(12),
-                  child: Row(
+                  child: Column(
                     children: [
-                      // Course Name
-                      Expanded(
-                        flex: 3,
-                        child: TextFormField(
-                          initialValue: course.name,
-                          style: const TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: 'Course Name',
-                            isDense: true,
-                          ),
-                          onChanged: (v) => course.name = v,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-
-                      // Credits
-                      SizedBox(
-                        width: 70,
-                        child: DropdownButtonFormField<double>(
-                          initialValue: course.credits,
-                          decoration: const InputDecoration(
-                            labelText: 'Credits',
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                          ),
-                          items: [1.0, 2.0, 3.0, 4.0, 5.0]
-                              .map(
-                                (c) => DropdownMenuItem(
-                                  value: c,
-                                  child: Text('${c.toInt()}'),
+                      // Row 1: Course Name + Delete
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              initialValue: course.name,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              decoration: const InputDecoration(
+                                hintText: 'Course / Subject Name',
+                                isDense: true,
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 4,
                                 ),
-                              )
-                              .toList(),
-                          onChanged: (v) {
-                            if (v != null) setState(() => course.credits = v);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-
-                      // Grade Point
-                      SizedBox(
-                        width: 80,
-                        child: DropdownButtonFormField<double>(
-                          initialValue: course.gradePoint,
-                          decoration: const InputDecoration(
-                            labelText: 'Grade',
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
+                              ),
+                              onChanged: (v) => course.name = v,
                             ),
                           ),
-                          items:
-                              (_gradingScale == '10-Point Scale'
-                                      ? [
-                                          10.0,
-                                          9.0,
-                                          8.5,
-                                          8.0,
-                                          7.5,
-                                          7.0,
-                                          6.0,
-                                          5.0,
-                                          4.0,
-                                        ]
-                                      : [
-                                          4.0,
-                                          3.7,
-                                          3.3,
-                                          3.0,
-                                          2.7,
-                                          2.3,
-                                          2.0,
-                                          1.0,
-                                        ])
+                          if (_courses.length > 1)
+                            IconButton(
+                              icon: const Icon(
+                                Icons.close_rounded,
+                                size: 18,
+                                color: AppColors.error,
+                              ),
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () {
+                                setState(() => _courses.removeAt(idx));
+                              },
+                            ),
+                        ],
+                      ),
+                      const Divider(height: 16),
+
+                      // Row 2: Credits & Grade Selectors
+                      Row(
+                        children: [
+                          // Credits Dropdown
+                          Expanded(
+                            child: DropdownButtonFormField<double>(
+                              initialValue: course.credits,
+                              isExpanded: true,
+                              decoration: const InputDecoration(
+                                labelText: 'Credits',
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                              ),
+                              items: [1.0, 2.0, 3.0, 4.0, 5.0]
                                   .map(
-                                    (g) => DropdownMenuItem(
-                                      value: g,
-                                      child: Text('$g'),
+                                    (c) => DropdownMenuItem(
+                                      value: c,
+                                      child: Text('${c.toInt()} Credits'),
                                     ),
                                   )
                                   .toList(),
-                          onChanged: (v) {
-                            if (v != null) {
-                              setState(() => course.gradePoint = v);
-                            }
-                          },
-                        ),
-                      ),
-
-                      // Remove
-                      if (_courses.length > 1)
-                        IconButton(
-                          icon: const Icon(
-                            Icons.close_rounded,
-                            size: 18,
-                            color: AppColors.error,
+                              onChanged: (v) {
+                                if (v != null) {
+                                  setState(() => course.credits = v);
+                                }
+                              },
+                            ),
                           ),
-                          onPressed: () {
-                            setState(() => _courses.removeAt(idx));
-                          },
-                        ),
+                          const SizedBox(width: 10),
+
+                          // Grade Point Dropdown
+                          Expanded(
+                            child: DropdownButtonFormField<double>(
+                              initialValue: course.gradePoint,
+                              isExpanded: true,
+                              decoration: const InputDecoration(
+                                labelText: 'Grade',
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                              ),
+                              items:
+                                  (_gradingScale == '10-Point Scale'
+                                          ? [
+                                              10.0,
+                                              9.0,
+                                              8.5,
+                                              8.0,
+                                              7.5,
+                                              7.0,
+                                              6.0,
+                                              5.0,
+                                              4.0,
+                                            ]
+                                          : [
+                                              4.0,
+                                              3.7,
+                                              3.3,
+                                              3.0,
+                                              2.7,
+                                              2.3,
+                                              2.0,
+                                              1.0,
+                                            ])
+                                      .map(
+                                        (g) => DropdownMenuItem(
+                                          value: g,
+                                          child: Text('Grade $g'),
+                                        ),
+                                      )
+                                      .toList(),
+                              onChanged: (v) {
+                                if (v != null) {
+                                  setState(() => course.gradePoint = v);
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),

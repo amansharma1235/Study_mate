@@ -292,14 +292,18 @@ class HomeScreen extends ConsumerWidget {
                               ],
                             ),
                             const SizedBox(height: 10),
-                            Text(
-                              '${data.todayStudyMinutes}m / ${data.dailyGoalMinutes}m',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                '${data.todayStudyMinutes}m / ${data.dailyGoalMinutes}m',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: isDark
+                                      ? AppColors.textPrimaryDark
+                                      : AppColors.textPrimaryLight,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -341,29 +345,33 @@ class HomeScreen extends ConsumerWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Icon(
-                                  Icons.check_circle_outline_rounded,
-                                  color: AppColors.secondary,
-                                  size: 22,
-                                ),
-                                Text(
-                                  '${(data.taskCompletionPercentage * 100).toInt()}%',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
+                                    Icons.check_circle_outline_rounded,
                                     color: AppColors.secondary,
-                                    fontSize: 13,
+                                    size: 22,
                                   ),
-                                ),
+                                  Text(
+                                    '${(data.taskCompletionPercentage * 100).toInt()}%',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.secondary,
+                                      fontSize: 13,
+                                    ),
+                                  ),
                               ],
                             ),
                             const SizedBox(height: 10),
-                            Text(
-                              '${data.todayTasksCompleted} of ${data.todayTasksTotal}',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                '${data.todayTasksCompleted} of ${data.todayTasksTotal}',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: isDark
+                                      ? AppColors.textPrimaryDark
+                                      : AppColors.textPrimaryLight,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -414,7 +422,7 @@ class HomeScreen extends ConsumerWidget {
                   physics: const NeverScrollableScrollPhysics(),
                   mainAxisSpacing: 10,
                   crossAxisSpacing: 10,
-                  childAspectRatio: 0.82,
+                  childAspectRatio: 0.88,
                   children: [
                     _buildQuickToolItem(
                       context,
@@ -910,7 +918,7 @@ class HomeScreen extends ConsumerWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
             border: Border.all(
@@ -923,25 +931,27 @@ class HomeScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(7),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: color, size: 19),
               ),
-              const SizedBox(height: 5),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimaryLight,
+                  ),
                 ),
               ),
             ],

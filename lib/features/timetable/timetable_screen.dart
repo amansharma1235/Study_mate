@@ -56,59 +56,60 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
               ),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: List.generate(7, (idx) {
                 final dayNumber = idx + 1;
                 final isSelected = selectedDay == dayNumber;
                 final isToday = DateTime.now().weekday == dayNumber;
 
-                return GestureDetector(
-                  onTap: () =>
-                      ref.read(selectedTimetableDayProvider.notifier).state =
-                          dayNumber,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusMedium,
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () =>
+                        ref.read(selectedTimetableDayProvider.notifier).state =
+                            dayNumber,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
                       ),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          _days[idx],
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: isSelected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: isSelected
-                                ? Colors.white
-                                : (isDark
-                                      ? AppColors.textSecondaryDark
-                                      : AppColors.textPrimaryLight),
-                          ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primary
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusMedium,
                         ),
-                        if (isToday) ...[
-                          const SizedBox(height: 4),
-                          Container(
-                            width: 5,
-                            height: 5,
-                            decoration: BoxDecoration(
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _days[idx],
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
                               color: isSelected
                                   ? Colors.white
-                                  : AppColors.secondary,
-                              shape: BoxShape.circle,
+                                  : (isDark
+                                        ? AppColors.textSecondaryDark
+                                        : AppColors.textPrimaryLight),
                             ),
                           ),
+                          if (isToday) ...[
+                            const SizedBox(height: 3),
+                            Container(
+                              width: 4.5,
+                              height: 4.5,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Colors.white
+                                    : AppColors.secondary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 );
@@ -231,22 +232,26 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                         size: 14,
                         color: AppColors.secondary,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        item.room.isNotEmpty
-                            ? 'Room ${item.room}'
-                            : 'No room specified',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight,
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          item.room.isNotEmpty
+                              ? 'Room ${item.room}'
+                              : 'No room specified',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
+                          ),
                         ),
                       ),
                     ],
                   ),
                   if (item.instructor.isNotEmpty) ...[
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Row(
                       children: [
                         const Icon(
@@ -254,14 +259,18 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                           size: 14,
                           color: AppColors.primary,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          item.instructor,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondaryLight,
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            item.instructor,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                            ),
                           ),
                         ),
                       ],

@@ -59,5 +59,9 @@
 
     <!-- Center Spine Spine Accent -->
     <path d="M 256 322 L 256 414" stroke="#D5DCF8" stroke-width="3" stroke-linecap="round" />
+
+    <!-- Brand Banner Badge with STUDY MATE text -->
+    <rect x="120" y="428" width="272" height="46" rx="23" fill="#FFFFFF" opacity="0.97" />
+    <text x="256" y="460" font-family="'Inter', -apple-system, sans-serif" font-size="22" font-weight="900" text-anchor="middle" letter-spacing="1.5" fill="#4F46E5">STUDY MATE</text>
   </g>
 </svg>
