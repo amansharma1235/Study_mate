@@ -1,35 +1,34 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Brand Colors - Signature Astral Blue & Electric Sapphire (Unique Modern Palette)
-  static const Color primary = Color(0xFF2563EB); // Electric Royal Blue
-  static const Color primaryVariant = Color(0xFF1D4ED8); // Deep Royal Navy
-  static const Color primaryDark = Color(0xFF0F172A); // Midnight Slate
-  static const Color primaryLight = Color(0xFFEFF6FF); // Soft Glacial Ice
-  static const Color secondary = Color(0xFF0891B2); // Deep Cyan
-  static const Color secondaryLight = Color(0xFFECFEFF);
+  // Brand Colors - Master Mockup Palette (#6258E8 Indigo & #3987F5 Sky Blue)
+  static const Color primary = Color(0xFF6258E8); // Master Royal Indigo
+  static const Color primaryVariant = Color(0xFF4F46E5); // Deep Indigo
+  static const Color primaryDark = Color(0xFF3730A3);
+  static const Color primaryLight = Color(0xFFEEF0FD); // Soft Lavender Glaze
+  static const Color secondary = Color(0xFF3987F5); // Master Sky Blue / Azure
+  static const Color secondaryLight = Color(0xFFEFF6FF);
   static const Color accentAmber = Color(0xFFF59E0B); // Golden Amber for streaks & achievements
   static const Color accentAmberLight = Color(0xFFFEF3C7);
-  static const Color accentCyan = Color(0xFF06B6D4); // Electric Cyan highlight
+  static const Color accentCyan = Color(0xFF06B6D4);
 
-  // Backgrounds & Surfaces (Light)
-  static const Color backgroundLight = Color(0xFFF8FAFC);
+  // Backgrounds & Surfaces (Light - Clean Porcelain Slate #F7F7FC)
+  static const Color backgroundLight = Color(0xFFF7F7FC);
   static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color cardLight = Color(0xFFFFFFFF);
-  static const Color borderLight = Color(0xFFE2E8F0);
+  static const Color borderLight = Color(0xFFE5E7EB);
 
-  // Backgrounds & Surfaces (Dark)
-  static const Color backgroundDark = Color(0xFF0B0F19);
-  static const Color surfaceDark = Color(0xFF131B2E);
-  static const Color cardDark = Color(0xFF131B2E);
-  static const Color borderDark = Color(0xFF1E293B);
+  // Backgrounds & Surfaces (Dark - #111827)
+  static const Color backgroundDark = Color(0xFF111827);
+  static const Color surfaceDark = Color(0xFF1F2937);
+  static const Color cardDark = Color(0xFF1F2937);
+  static const Color borderDark = Color(0xFF374151);
 
-  // Gradient Tokens - Deep Astral Midnight to Electric Royal Blue
+  // Gradient Tokens - Vibrant Royal Iris to Sky Blue (From Master Design Mockup)
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [
-      Color(0xFF0F172A), // Midnight Obsidian
-      Color(0xFF1E3A8A), // Deep Sapphire
-      Color(0xFF2563EB), // Electric Royal Azure
+      Color(0xFF6258E8), // Royal Iris Indigo
+      Color(0xFF3987F5), // Vibrant Sky Blue
     ],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -37,19 +36,18 @@ class AppColors {
 
   static const LinearGradient heroCardGradient = LinearGradient(
     colors: [
-      Color(0xFF0B132B), // Deep Midnight
-      Color(0xFF1C3166), // Rich Indigo-Navy
-      Color(0xFF2563EB), // Radiant Royal Blue
+      Color(0xFF6258E8), // Master Royal Iris
+      Color(0xFF4C6EF5), // Luminous Royal Violet
+      Color(0xFF3987F5), // Master Vibrant Sky Blue
     ],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    stops: [0.0, 0.55, 1.0],
   );
 
   static const LinearGradient electricCyanGradient = LinearGradient(
     colors: [
-      Color(0xFF1E3A8A),
-      Color(0xFF0284C7),
+      Color(0xFF6258E8),
+      Color(0xFF3987F5),
       Color(0xFF06B6D4),
     ],
     begin: Alignment.topLeft,

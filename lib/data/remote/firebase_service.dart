@@ -1,7 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../firebase_options.dart';
 
 final firebaseServiceProvider = Provider<FirebaseService>((ref) {
   return FirebaseService.instance;
@@ -21,13 +24,20 @@ class FirebaseService {
         _isInitialized = true;
         return;
       }
-      // When google-services.json / GoogleService-Info.plist are supplied, initializeApp succeeds.
-      await Firebase.initializeApp();
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
       _isInitialized = true;
+      debugPrint('Firebase successfully initialized for project: studymate-e8da6');
     } catch (e) {
       debugPrint('Firebase is not yet configured with native credentials: $e');
       _isInitialized = false;
     }
+  }
+
+  FirebaseAuth? get auth {
+    if (!_isInitialized) return null;
+    return FirebaseAuth.instance;
   }
 
   FirebaseFirestore? get firestore {

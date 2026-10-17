@@ -36,13 +36,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
     setState(() => _isLoading = true);
     try {
+      final email = _emailController.text.trim();
       await ref
           .read(authControllerProvider.notifier)
-          .sendPasswordReset(_emailController.text);
+          .sendPasswordReset(email);
       if (!mounted) return;
       context.push(
         AppRoutes.passwordResetFeedback,
-        extra: _emailController.text,
+        extra: email,
       );
     } catch (e) {
       if (!mounted) return;

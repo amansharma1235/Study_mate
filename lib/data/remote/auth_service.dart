@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -113,6 +114,23 @@ class AuthService {
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
+
+        if (_firebaseService.firestore != null) {
+          try {
+            await _firebaseService.firestore!
+                .collection('users')
+                .doc(user.uid)
+                .set(profile.toMap(), SetOptions(merge: true));
+          } catch (e) {
+            debugPrint('Error syncing profile to Firestore: $e');
+          }
+        }
+
+        await _secureStorage.write(
+          key: _keySessionUser,
+          value: jsonEncode(profile.toMap()),
+        );
+
         return profile;
       } else {
         // Secure local account registration
@@ -147,10 +165,7 @@ class AuthService {
         return profile;
       }
     } on FirebaseAuthException catch (e) {
-      throw AuthException(
-        e.message ?? 'Authentication error occurred.',
-        code: e.code,
-      );
+      throw AuthException(_mapFirebaseError(e), code: e.code);
     } catch (e) {
       if (e is AuthException) rethrow;
       throw AuthException(
@@ -209,14 +224,37 @@ class AuthService {
         final user = credential.user;
         if (user == null) throw const AuthException('Sign in failed.');
 
-        return UserProfileModel(
+        String displayName = user.displayName ?? '';
+        if (displayName.isEmpty && _firebaseService.firestore != null) {
+          try {
+            final doc = await _firebaseService.firestore!
+                .collection('users')
+                .doc(user.uid)
+                .get();
+            if (doc.exists && doc.data() != null) {
+              displayName = doc.data()!['displayName'] as String? ?? '';
+            }
+          } catch (_) {}
+        }
+        if (displayName.isEmpty) {
+          displayName = email.split('@').first;
+        }
+
+        final profile = UserProfileModel(
           uid: user.uid,
           email: user.email ?? email.trim(),
-          displayName: user.displayName ?? 'Student',
+          displayName: displayName,
           photoUrl: user.photoURL,
           createdAt: user.metadata.creationTime ?? DateTime.now(),
           updatedAt: DateTime.now(),
         );
+
+        await _secureStorage.write(
+          key: _keySessionUser,
+          value: jsonEncode(profile.toMap()),
+        );
+
+        return profile;
       } else {
         // Secure local login validation
         final users = await _getStoredUsers();
@@ -243,7 +281,7 @@ class AuthService {
         return profile;
       }
     } on FirebaseAuthException catch (e) {
-      throw AuthException(e.message ?? 'Sign-in failed.', code: e.code);
+      throw AuthException(_mapFirebaseError(e), code: e.code);
     } catch (e) {
       if (e is AuthException) rethrow;
       throw AuthException('Failed to sign in: $e');
@@ -267,13 +305,34 @@ class AuthService {
         }
       }
     } on FirebaseAuthException catch (e) {
-      throw AuthException(
-        e.message ?? 'Failed to send password reset email.',
-        code: e.code,
-      );
+      throw AuthException(_mapFirebaseError(e), code: e.code);
     } catch (e) {
       if (e is AuthException) rethrow;
       throw AuthException('Failed to send reset email: $e');
+    }
+  }
+
+  String _mapFirebaseError(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'user-not-found':
+        return 'No account registered with this email address.';
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Invalid email or password. Please check your credentials.';
+      case 'email-already-in-use':
+        return 'An account already exists with this email address.';
+      case 'weak-password':
+        return 'The password is too weak. Please use at least 6 characters.';
+      case 'invalid-email':
+        return 'The email address is badly formatted.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again in a few moments.';
+      case 'network-request-failed':
+        return 'Network connection failed. Please check your internet connection.';
+      default:
+        return e.message ?? 'Authentication error occurred (${e.code}).';
     }
   }
 

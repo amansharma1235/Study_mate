@@ -63,7 +63,7 @@ import 'route_names.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: AppRoutes.splash,
+    initialLocation: AppRoutes.onboarding,
     routes: [
       GoRoute(
         path: AppRoutes.splash,

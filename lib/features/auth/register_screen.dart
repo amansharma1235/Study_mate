@@ -46,8 +46,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       await ref
           .read(authControllerProvider.notifier)
           .register(
-            _nameController.text,
-            _emailController.text,
+            _nameController.text.trim(),
+            _emailController.text.trim(),
             _passwordController.text,
           );
       if (!mounted) return;

@@ -142,9 +142,9 @@ class HomeScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(22),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF1E3A8A).withValues(alpha: 0.35),
-                        blurRadius: 22,
-                        offset: const Offset(0, 10),
+                        color: AppColors.primary.withValues(alpha: 0.28),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
@@ -393,12 +393,11 @@ class HomeScreen extends ConsumerWidget {
                                   vertical: 11,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF0F172A).withValues(
-                                    alpha: 0.38,
-                                  ),
+                                  color: Colors.white.withValues(alpha: 0.16),
                                   borderRadius: BorderRadius.circular(13),
                                   border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.12),
+                                    color: Colors.white.withValues(alpha: 0.28),
+                                    width: 1,
                                   ),
                                 ),
                                 child: Row(
