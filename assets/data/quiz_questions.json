@@ -1,0 +1,132 @@
+[
+  {
+    "id": "q1",
+    "category": "Data Structures",
+    "question": "What is the worst-case time complexity of searching for an element in an unbalanced Binary Search Tree (BST)?",
+    "options": [
+      "O(1)",
+      "O(log n)",
+      "O(n)",
+      "O(n log n)"
+    ],
+    "correctIndex": 2,
+    "explanation": "In an unbalanced BST (skewed tree resembling a linked list), searching every node sequentially requires visiting up to n nodes, resulting in O(n) worst-case time complexity."
+  },
+  {
+    "id": "q2",
+    "category": "Data Structures",
+    "question": "Which data structure follows the First-In, First-Out (FIFO) principle?",
+    "options": [
+      "Stack",
+      "Queue",
+      "Heap",
+      "Tree"
+    ],
+    "correctIndex": 1,
+    "explanation": "A Queue operates on the First-In, First-Out (FIFO) principle where elements are inserted at the rear and removed from the front."
+  },
+  {
+    "id": "q3",
+    "category": "Algorithms",
+    "question": "Which sorting algorithm guarantees O(n log n) time complexity in the worst-case scenario?",
+    "options": [
+      "Quick Sort",
+      "Merge Sort",
+      "Bubble Sort",
+      "Insertion Sort"
+    ],
+    "correctIndex": 1,
+    "explanation": "Merge Sort always divides the input array into halves and combines them in linear time, guaranteeing O(n log n) time complexity across best, average, and worst cases."
+  },
+  {
+    "id": "q4",
+    "category": "Algorithms",
+    "question": "Dijkstra's algorithm is commonly used to solve which problem?",
+    "options": [
+      "Minimum Spanning Tree",
+      "Single-Source Shortest Path with non-negative edge weights",
+      "Maximum Network Flow",
+      "String pattern matching"
+    ],
+    "correctIndex": 1,
+    "explanation": "Dijkstra's algorithm finds the shortest path from a single source vertex to all other vertices in a weighted graph with non-negative edge weights."
+  },
+  {
+    "id": "q5",
+    "category": "Operating Systems",
+    "question": "Which of the following conditions is NOT one of the four Coffman conditions required for a deadlock?",
+    "options": [
+      "Mutual Exclusion",
+      "Hold and Wait",
+      "Preemption allowed",
+      "Circular Wait"
+    ],
+    "correctIndex": 2,
+    "explanation": "The four Coffman conditions for deadlock are: Mutual Exclusion, Hold and Wait, No Preemption (preemption is NOT allowed), and Circular Wait."
+  },
+  {
+    "id": "q6",
+    "category": "Operating Systems",
+    "question": "What is the primary function of the Translation Lookaside Buffer (TLB)?",
+    "options": [
+      "Cache virtual-to-physical address translations to accelerate memory access",
+      "Store disk blocks for fast I/O",
+      "Manage CPU interrupt vectors",
+      "Schedule high-priority kernel threads"
+    ],
+    "correctIndex": 0,
+    "explanation": "The TLB is a high-speed hardware cache located in the Memory Management Unit (MMU) that caches recent virtual-to-physical page table translations."
+  },
+  {
+    "id": "q7",
+    "category": "Computer Networks",
+    "question": "At which layer of the OSI model does the TCP protocol operate?",
+    "options": [
+      "Network Layer",
+      "Transport Layer",
+      "Session Layer",
+      "Data Link Layer"
+    ],
+    "correctIndex": 1,
+    "explanation": "Transmission Control Protocol (TCP) is a core protocol of the Transport Layer (Layer 4 in the OSI model), providing reliable, ordered delivery of byte streams."
+  },
+  {
+    "id": "q8",
+    "category": "Computer Networks",
+    "question": "What is the main difference between TCP and UDP?",
+    "options": [
+      "UDP is connection-oriented and reliable; TCP is connectionless",
+      "TCP is connection-oriented with guaranteed delivery; UDP is connectionless and lightweight",
+      "TCP can only transmit text data; UDP transmits binary data",
+      "TCP operates at Layer 7; UDP operates at Layer 3"
+    ],
+    "correctIndex": 1,
+    "explanation": "TCP establishes a 3-way handshake connection and guarantees packet delivery and ordering, whereas UDP is connectionless, lower-latency, and does not guarantee delivery."
+  },
+  {
+    "id": "q9",
+    "category": "Databases",
+    "question": "In relational databases, what does the 'I' in the ACID transaction properties stand for?",
+    "options": [
+      "Integrity",
+      "Indexability",
+      "Isolation",
+      "Immutability"
+    ],
+    "correctIndex": 2,
+    "explanation": "ACID stands for Atomicity, Consistency, Isolation, and Durability. Isolation ensures concurrent transactions do not interfere with one another."
+  },
+  {
+    "id": "q10",
+    "category": "Databases",
+    "question": "Which normal form requires the elimination of transitive dependencies?",
+    "options": [
+      "First Normal Form (1NF)",
+      "Second Normal Form (2NF)",
+      "Third Normal Form (3NF)",
+      "Boyce-Codd Normal Form (BCNF)"
+    ],
+    "correctIndex": 2,
+    "explanation": "3NF requires that the table is in 2NF and that all non-key attributes are directly dependent only on the primary key, with no transitive dependencies (X -> Y -> Z)."
+  }
+]

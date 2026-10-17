@@ -1,0 +1,66 @@
+[
+  {
+    "id": "tip-1",
+    "title": "The Feynman Technique",
+    "category": "Learning Method",
+    "summary": "Master any topic by teaching it in simple language.",
+    "content": "Step 1: Choose a concept.\nStep 2: Explain it to a hypothetical 10-year-old using clear, simple vocabulary.\nStep 3: Identify knowledge gaps where your explanation stumbles.\nStep 4: Review your primary source notes and refine the explanation with intuitive analogies.",
+    "isFavorite": false
+  },
+  {
+    "id": "tip-2",
+    "title": "Spaced Repetition Schedule",
+    "category": "Memory",
+    "summary": "Review material right before you are likely to forget it.",
+    "content": "Optimal review intervals for long-term retention: Review immediately after session (Day 0), 24 hours later (Day 1), Day 3, Day 7, Day 14, and Day 30. This permanently shifts information into semantic long-term memory.",
+    "isFavorite": false
+  },
+  {
+    "id": "tip-3",
+    "title": "Active Recall vs. Passive Re-reading",
+    "category": "Exam Prep",
+    "summary": "Testing yourself produces up to 300% better retention than re-reading.",
+    "content": "Close your textbook or notes. On a blank sheet of paper, write down or diagram everything you can remember about the topic. Compare with notes to spot missing elements. Quizzing forces neural pathways to strengthen.",
+    "isFavorite": false
+  },
+  {
+    "id": "tip-4",
+    "title": "Pomodoro Flow Optimization",
+    "category": "Focus",
+    "summary": "25 minutes of deep focus followed by 5 minutes of true sensory rest.",
+    "content": "During focus intervals, eliminate all notifications and browser tabs. During the 5-minute break, avoid scrolling social media or checking emails—stand up, stretch, hydrate, and rest your eyes looking at a distant object.",
+    "isFavorite": false
+  },
+  {
+    "id": "tip-5",
+    "title": "Interleaving Study Subjects",
+    "category": "Time Management",
+    "summary": "Switch between related topics rather than mass-blocking a single topic for 6 hours.",
+    "content": "Instead of studying Calculus for 5 hours straight, spend 90 minutes on Calculus, switch to Data Structures for 90 minutes, then Physics. Interleaving improves discrimination skills and problem-solving flexibility.",
+    "isFavorite": false
+  },
+  {
+    "id": "tip-6",
+    "title": "Sleep and Memory Consolidation",
+    "category": "Wellness",
+    "summary": "Deep sleep (SWS) and REM sleep are when the brain converts short-term memories into permanent knowledge.",
+    "content": "All-nighters severely degrade cognitive recall and analytical ability. Aim for 7 to 8.5 hours of uninterrupted sleep, particularly during exam weeks. Avoid bright blue screens 45 minutes before sleep.",
+    "isFavorite": false
+  },
+  {
+    "id": "tip-7",
+    "title": "The Blurting Method",
+    "category": "Exam Prep",
+    "summary": "Rapid retrieval practice for comprehensive syllabus coverage.",
+    "content": "Pick a syllabus subtopic. Set a timer for 10 minutes. Write down every formula, definition, diagram, and keyword you recall without looking. Use a red pen to fill in anything missed from your notes.",
+    "isFavorite": false
+  },
+  {
+    "id": "tip-8",
+    "title": "Eat the Frog First",
+    "category": "Time Management",
+    "summary": "Tackle your hardest or most dreaded subject in your first morning study block.",
+    "content": "Willpower and neurochemical focus reserves are highest early in the day. Complete the most cognitively demanding topic before noon to create momentum and reduce procrastination anxiety.",
+    "isFavorite": false
+  }
+]

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="studymateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6258E8" />
+      <stop offset="50%" stop-color="#4F6AF0" />
+      <stop offset="100%" stop-color="#3987F5" />
+    </linearGradient>
+
+    <!-- Subtle Inner Glow -->
+    <linearGradient id="innerGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Tassel Gradient -->
+    <linearGradient id="tasselGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+
+    <!-- Book Page Gradient -->
+    <linearGradient id="bookPageGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#F1F3FD" />
+    </linearGradient>
+
+    <filter id="dropShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#1E1668" flood-opacity="0.32" />
+    </filter>
+  </defs>
+
+  <!-- Squircle Base -->
+  <rect width="512" height="512" rx="116" fill="url(#studymateGrad)" />
+  <rect width="512" height="512" rx="116" fill="url(#innerGlow)" />
+
+  <g filter="url(#dropShadow)">
+    <!-- Graduation Cap: Skullcap Underneath -->
+    <path d="M 174 195 Q 256 242 338 195 L 338 232 C 338 274 256 304 174 262 Z" fill="#E2E6FA" />
+
+    <!-- Graduation Cap: Diamond Top (Mortarboard) -->
+    <polygon points="256,108 406,178 256,242 106,178" fill="#FFFFFF" />
+
+    <!-- Cap Button -->
+    <ellipse cx="256" cy="176" rx="9" ry="7" fill="#F59E0B" />
+
+    <!-- Golden Tassel Ribbon & Brush -->
+    <path d="M 256 176 Q 346 186 376 214 L 376 270" fill="none" stroke="url(#tasselGrad)" stroke-width="4.5" stroke-linecap="round" />
+    <!-- Tassel Ring -->
+    <circle cx="376" cy="272" r="4.5" fill="#F59E0B" />
+    <!-- Tassel Fringe -->
+    <path d="M 371 275 L 381 275 L 384 308 L 368 308 Z" fill="url(#tasselGrad)" />
+
+    <!-- Open Book: Left Page -->
+    <path d="M 248 318 C 205 304 154 308 112 328 C 104 332 98 340 98 349 L 98 408 C 98 418 108 426 118 422 C 156 405 204 402 248 418 Z" fill="url(#bookPageGrad)" />
+
+    <!-- Open Book: Right Page -->
+    <path d="M 264 318 C 307 304 358 308 400 328 C 408 332 414 340 414 349 L 414 408 C 414 418 404 426 394 422 C 356 405 308 402 264 418 Z" fill="url(#bookPageGrad)" />
+
+    <!-- Center Spine Spine Accent -->
+    <path d="M 256 322 L 256 414" stroke="#D5DCF8" stroke-width="3" stroke-linecap="round" />
+  </g>
+</svg>
