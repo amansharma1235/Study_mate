@@ -48,6 +48,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       if (!mounted) return;
 
       final prefs = ref.read(preferenceServiceProvider);
+      if (!prefs.hasSeenNewOnboarding()) {
+        await prefs.setHasSeenNewOnboarding(true);
+        await prefs.setOnboardingDone(false);
+      }
+      if (!mounted) return;
       final onboardingDone = prefs.isOnboardingDone();
       final user = ref.read(currentProfileProvider);
 

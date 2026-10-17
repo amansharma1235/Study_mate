@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Brand Colors - Deep Indigo & Refined Teal (Human-Crafted Palette)
-  static const Color primary = Color(0xFF4F46E5);
-  static const Color primaryVariant = Color(0xFF3730A3);
-  static const Color primaryLight = Color(0xFFEEF2FF);
-  static const Color secondary = Color(0xFF0D9488);
-  static const Color secondaryLight = Color(0xFFF0FDFA);
+  // Brand Colors - Signature Astral Blue & Electric Sapphire (Unique Modern Palette)
+  static const Color primary = Color(0xFF2563EB); // Electric Royal Blue
+  static const Color primaryVariant = Color(0xFF1D4ED8); // Deep Royal Navy
+  static const Color primaryDark = Color(0xFF0F172A); // Midnight Slate
+  static const Color primaryLight = Color(0xFFEFF6FF); // Soft Glacial Ice
+  static const Color secondary = Color(0xFF0891B2); // Deep Cyan
+  static const Color secondaryLight = Color(0xFFECFEFF);
+  static const Color accentAmber = Color(0xFFF59E0B); // Golden Amber for streaks & achievements
+  static const Color accentAmberLight = Color(0xFFFEF3C7);
+  static const Color accentCyan = Color(0xFF06B6D4); // Electric Cyan highlight
 
   // Backgrounds & Surfaces (Light)
   static const Color backgroundLight = Color(0xFFF8FAFC);
@@ -15,14 +19,39 @@ class AppColors {
   static const Color borderLight = Color(0xFFE2E8F0);
 
   // Backgrounds & Surfaces (Dark)
-  static const Color backgroundDark = Color(0xFF111827);
-  static const Color surfaceDark = Color(0xFF1F2937);
-  static const Color cardDark = Color(0xFF1F2937);
-  static const Color borderDark = Color(0xFF374151);
+  static const Color backgroundDark = Color(0xFF0B0F19);
+  static const Color surfaceDark = Color(0xFF131B2E);
+  static const Color cardDark = Color(0xFF131B2E);
+  static const Color borderDark = Color(0xFF1E293B);
 
-  // Gradient Tokens
+  // Gradient Tokens - Deep Astral Midnight to Electric Royal Blue
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [primary, secondary],
+    colors: [
+      Color(0xFF0F172A), // Midnight Obsidian
+      Color(0xFF1E3A8A), // Deep Sapphire
+      Color(0xFF2563EB), // Electric Royal Azure
+    ],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  static const LinearGradient heroCardGradient = LinearGradient(
+    colors: [
+      Color(0xFF0B132B), // Deep Midnight
+      Color(0xFF1C3166), // Rich Indigo-Navy
+      Color(0xFF2563EB), // Radiant Royal Blue
+    ],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    stops: [0.0, 0.55, 1.0],
+  );
+
+  static const LinearGradient electricCyanGradient = LinearGradient(
+    colors: [
+      Color(0xFF1E3A8A),
+      Color(0xFF0284C7),
+      Color(0xFF06B6D4),
+    ],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

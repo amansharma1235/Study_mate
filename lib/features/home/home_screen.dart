@@ -136,129 +136,330 @@ class HomeScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top Greeting & Streak Card (Mockup Screen 10)
+                // Top Greeting & Streak Hero Card (Unique Midnight Sapphire & Royal Azure)
                 Container(
-                  padding: const EdgeInsets.all(AppDimensions.space20),
                   decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusLarge,
-                    ),
+                    borderRadius: BorderRadius.circular(22),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.32),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
+                        color: const Color(0xFF1E3A8A).withValues(alpha: 0.35),
+                        blurRadius: 22,
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Hello, ${data.userName}! 👋',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white,
-                                    fontSize: 23,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: -0.4,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Keep going! You are doing great.',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: Stack(
+                      children: [
+                        // Layer 1: Luxury Midnight to Royal Gradient Surface
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            gradient: AppColors.heroCardGradient,
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.14),
+                              width: 1.2,
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.22),
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.radiusFull,
-                              ),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.3),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.local_fire_department_rounded,
-                                  color: Colors.orangeAccent,
-                                  size: 19,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${data.studyStreakDays}d Streak',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        DateFormatter.formatDate(DateTime.now()),
-                        style: GoogleFonts.inter(
-                          color: Colors.white.withValues(alpha: 0.75),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
                         ),
-                      ),
 
-                      const SizedBox(height: AppDimensions.space16),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(
-                            AppDimensions.radiusMedium,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.format_quote_rounded,
-                              color: Colors.white70,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                data.motivationalQuote,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontStyle: FontStyle.italic,
-                                ),
+                        // Layer 2: Ambient Glowing Radial Orbs for Bespoke Depth
+                        Positioned(
+                          top: -45,
+                          right: -35,
+                          child: Container(
+                            width: 170,
+                            height: 170,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  const Color(0xFF38BDF8).withValues(alpha: 0.28),
+                                  Colors.transparent,
+                                ],
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ],
+                        Positioned(
+                          bottom: -35,
+                          left: -25,
+                          child: Container(
+                            width: 140,
+                            height: 140,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  const Color(0xFF818CF8).withValues(alpha: 0.20),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 15,
+                          right: 18,
+                          child: Opacity(
+                            opacity: 0.07,
+                            child: const Icon(
+                              Icons.school_rounded,
+                              size: 110,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+
+                        // Layer 3: Foreground Content
+                        Padding(
+                          padding: const EdgeInsets.all(AppDimensions.space20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Dynamic Greeting Pill
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 9,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            border: Border.all(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.15,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                _getTimeGreetingEmoji(),
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 5),
+                                              Text(
+                                                _getTimeGreeting(),
+                                                style: GoogleFonts.inter(
+                                                  color: Colors.white,
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Hello, ${data.userName}!',
+                                          style: GoogleFonts.inter(
+                                            color: Colors.white,
+                                            fontSize: 23,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: -0.4,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          'Ready to achieve your study goals today?',
+                                          style: GoogleFonts.inter(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.85,
+                                            ),
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+
+                                  // Warm Golden Amber Streak Badge
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 7,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          const Color(0xFFF59E0B).withValues(
+                                            alpha: 0.32,
+                                          ),
+                                          const Color(0xFFB45309).withValues(
+                                            alpha: 0.25,
+                                          ),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(
+                                        AppDimensions.radiusFull,
+                                      ),
+                                      border: Border.all(
+                                        color: const Color(0xFFFCD34D)
+                                            .withValues(alpha: 0.65),
+                                        width: 1.2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFFF59E0B)
+                                              .withValues(alpha: 0.25),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.local_fire_department_rounded,
+                                          color: Color(0xFFFDE68A),
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '${data.studyStreakDays}d Streak',
+                                          style: GoogleFonts.inter(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Date Capsule
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 9,
+                                  vertical: 3.5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.10),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.calendar_today_rounded,
+                                      size: 11,
+                                      color: Colors.white70,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      DateFormatter.formatDate(DateTime.now()),
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.85,
+                                        ),
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: AppDimensions.space16),
+
+                              // Editorial Frosted Thought / Quote Box with Cyan Accent
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 11,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0F172A).withValues(
+                                    alpha: 0.38,
+                                  ),
+                                  borderRadius: BorderRadius.circular(13),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.12),
+                                  ),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 3.5,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF38BDF8),
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.lightbulb_outline_rounded,
+                                                size: 13,
+                                                color: Color(0xFF38BDF8),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'DAILY MOTIVATION',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 9.5,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: 0.8,
+                                                  color: const Color(
+                                                    0xFF7DD3FC,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            data.motivationalQuote,
+                                            style: GoogleFonts.inter(
+                                              color: Colors.white,
+                                              fontSize: 12.5,
+                                              fontStyle: FontStyle.italic,
+                                              height: 1.35,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: AppDimensions.space20),
@@ -276,17 +477,38 @@ class HomeScreen extends ConsumerWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Icon(
-                                  Icons.timer_outlined,
-                                  color: AppColors.primary,
-                                  size: 22,
-                                ),
-                                Text(
-                                  '${(data.goalProgress * 100).toInt()}%',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.10,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.timer_outlined,
                                     color: AppColors.primary,
-                                    fontSize: 13,
+                                    size: 19,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.10,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '${(data.goalProgress * 100).toInt()}%',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.primary,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -344,19 +566,40 @@ class HomeScreen extends ConsumerWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Icon(
-                                    Icons.check_circle_outline_rounded,
-                                    color: AppColors.secondary,
-                                    size: 22,
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF10B981).withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                  Text(
+                                  child: const Icon(
+                                    Icons.check_circle_outline_rounded,
+                                    color: Color(0xFF059669),
+                                    size: 19,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF10B981).withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
                                     '${(data.taskCompletionPercentage * 100).toInt()}%',
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.secondary,
-                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF059669),
+                                      fontSize: 12,
                                     ),
                                   ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 10),
@@ -389,9 +632,9 @@ class HomeScreen extends ConsumerWidget {
                               value: data.taskCompletionPercentage,
                               backgroundColor: isDark
                                   ? AppColors.surfaceDark
-                                  : AppColors.secondaryLight,
+                                  : const Color(0xFFD1FAE5),
                               valueColor: const AlwaysStoppedAnimation<Color>(
-                                AppColors.secondary,
+                                Color(0xFF059669),
                               ),
                               borderRadius: BorderRadius.circular(4),
                               minHeight: 6,
@@ -900,6 +1143,20 @@ class HomeScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _getTimeGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) return 'Good Morning';
+    if (hour >= 12 && hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }
+
+  String _getTimeGreetingEmoji() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) return '☀️';
+    if (hour >= 12 && hour < 17) return '🌤️';
+    return '🌙';
   }
 
   Widget _buildQuickToolItem(

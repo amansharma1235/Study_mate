@@ -51,9 +51,13 @@ class PreferenceService {
   }
 
   // Onboarding
+  static const String _keyNewOnboardingSeen = 'new_onboarding_seen_v2';
   bool isOnboardingDone() => _prefs.getBool(_keyOnboardingDone) ?? false;
   Future<void> setOnboardingDone(bool done) =>
       _prefs.setBool(_keyOnboardingDone, done);
+  bool hasSeenNewOnboarding() => _prefs.getBool(_keyNewOnboardingSeen) ?? false;
+  Future<void> setHasSeenNewOnboarding(bool seen) =>
+      _prefs.setBool(_keyNewOnboardingSeen, seen);
 
   // Daily Goal
   int getDailyGoalMinutes() => _prefs.getInt(_keyDailyGoalMinutes) ?? 120;
