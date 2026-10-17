@@ -4,15 +4,15 @@ class AppStrings {
   static const String appTagline = 'Study. Plan. Achieve.';
 
   // Onboarding
-  static const String onboarding1Title = 'Welcome to StudyMate';
+  static const String onboarding1Title = 'Organize Your Studies';
   static const String onboarding1Desc =
-      'Your all-in-one student companion for better learning and higher goals.';
-  static const String onboarding2Title = 'Stay Organized';
+      'Manage all your notes, assignments, classes, and study materials in one smart place.';
+  static const String onboarding2Title = 'Track Goals & Progress';
   static const String onboarding2Desc =
-      'Manage your notes, tasks, timetable and more — all in one place.';
-  static const String onboarding3Title = 'Achieve Your Goals';
+      'Monitor syllabus completion, upcoming exam countdowns, study streaks, and grades.';
+  static const String onboarding3Title = 'Focus Better & Achieve More';
   static const String onboarding3Desc =
-      'Track your progress, prepare for exams and become the best version of yourself.';
+      'Master concepts with Pomodoro focus sessions, spaced repetition flashcards, and AI guidance.';
 
   // Bottom Navigation
   static const String navHome = 'Home';

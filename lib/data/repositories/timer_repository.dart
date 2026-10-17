@@ -86,7 +86,7 @@ class TimerRepository {
       if (s.mode == PomodoroMode.focus && s.completedAt.isAfter(startOfWeek)) {
         final weekday = s.completedAt.weekday;
         weeklyMinutes[weekday] =
-            (weeklyMinutes[weekday] ?? 0) + s.durationMinutes;
+            ((weeklyMinutes[weekday] ?? 0) + s.durationMinutes).toInt();
       }
     }
 

@@ -20,6 +20,18 @@ class MainScaffoldScreen extends StatelessWidget {
         location.startsWith(AppRoutes.exams) ||
         location.startsWith(AppRoutes.quizCategories) ||
         location.startsWith(AppRoutes.percentageCalculator) ||
+        location.startsWith(AppRoutes.multiSubjectCalculator) ||
+        location.startsWith(AppRoutes.cgpaCalculator) ||
+        location.startsWith(AppRoutes.planner) ||
+        location.startsWith(AppRoutes.flashcards) ||
+        location.startsWith(AppRoutes.syllabus) ||
+        location.startsWith(AppRoutes.aiAssistant) ||
+        location.startsWith(AppRoutes.documents) ||
+        location.startsWith(AppRoutes.voiceNotes) ||
+        location.startsWith(AppRoutes.habits) ||
+        location.startsWith(AppRoutes.coding) ||
+        location.startsWith(AppRoutes.career) ||
+        location.startsWith(AppRoutes.studyGroups) ||
         location.startsWith(AppRoutes.studyTips) ||
         location.startsWith(AppRoutes.studyStatistics) ||
         location.startsWith(AppRoutes.profile)) {

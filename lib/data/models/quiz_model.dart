@@ -83,3 +83,5 @@ class QuizAttempt {
     );
   }
 }
+
+typedef QuizAttemptModel = QuizAttempt;

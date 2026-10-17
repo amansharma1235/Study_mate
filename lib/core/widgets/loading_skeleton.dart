@@ -63,3 +63,26 @@ class _LoadingSkeletonState extends State<LoadingSkeleton>
     );
   }
 }
+
+class LoadingSkeletonList extends StatelessWidget {
+  final int count;
+  final double itemHeight;
+
+  const LoadingSkeletonList({super.key, this.count = 4, this.itemHeight = 80});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(AppDimensions.space16),
+      itemCount: count,
+      itemBuilder: (context, i) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: LoadingSkeleton(
+          width: double.infinity,
+          height: itemHeight,
+          borderRadius: AppDimensions.radiusMedium,
+        ),
+      ),
+    );
+  }
+}

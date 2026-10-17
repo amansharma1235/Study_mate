@@ -17,12 +17,61 @@ class _MoreToolsScreenState extends State<MoreToolsScreen> {
   String _searchQuery = '';
 
   final List<Map<String, dynamic>> _allTools = [
+    // Core Study Tools
+    {
+      'title': 'Smart Study Planner',
+      'subtitle': 'Exam-based session scheduling & conflict detection',
+      'icon': Icons.calendar_today_rounded,
+      'color': AppColors.primary,
+      'route': AppRoutes.planner,
+      'category': 'Study Tools',
+    },
+    {
+      'title': 'Flashcards & Spaced Recall',
+      'subtitle': 'SM-2 spaced repetition for formulas & concepts',
+      'icon': Icons.style_rounded,
+      'color': AppColors.secondary,
+      'route': AppRoutes.flashcards,
+      'category': 'Study Tools',
+    },
+    {
+      'title': 'Syllabus & Revision Tracker',
+      'subtitle': 'Chapter progress & automated revision intervals',
+      'icon': Icons.menu_book_rounded,
+      'color': AppColors.success,
+      'route': AppRoutes.syllabus,
+      'category': 'Study Tools',
+    },
     {
       'title': 'Pomodoro Study Timer',
       'subtitle': 'Focus sessions with deadline timing & breaks',
       'icon': Icons.timer_rounded,
       'color': AppColors.primary,
       'route': AppRoutes.timer,
+      'category': 'Study Tools',
+    },
+    {
+      'title': 'Daily Study Habits',
+      'subtitle': 'Habit streak tracking & daily goal targets',
+      'icon': Icons.local_fire_department_rounded,
+      'color': AppColors.warning,
+      'route': AppRoutes.habits,
+      'category': 'Study Tools',
+    },
+    {
+      'title': 'PDF & Study Documents',
+      'subtitle': 'Import lecture slides, books & formula guides',
+      'icon': Icons.picture_as_pdf_rounded,
+      'color': AppColors.error,
+      'route': AppRoutes.documents,
+      'category': 'Study Tools',
+    },
+    {
+      'title': 'Voice Notes & Audio Lectures',
+      'subtitle': 'Record and replay audio notes & viva summaries',
+      'icon': Icons.mic_rounded,
+      'color': AppColors.info,
+      'route': AppRoutes.voiceNotes,
       'category': 'Study Tools',
     },
     {
@@ -49,37 +98,83 @@ class _MoreToolsScreenState extends State<MoreToolsScreen> {
       'route': AppRoutes.quizCategories,
       'category': 'Study Tools',
     },
+
+    // AI & Advanced Tools
+    {
+      'title': 'StudyMate AI Tutor',
+      'subtitle': 'Concept explainer, quiz generator & note summarizer',
+      'icon': Icons.auto_awesome_rounded,
+      'color': AppColors.primary,
+      'route': AppRoutes.aiAssistant,
+      'category': 'AI & Skill Centers',
+    },
+    {
+      'title': 'Coding Practice Center',
+      'subtitle': 'DSA roadmaps, practice problems & interview prep',
+      'icon': Icons.terminal_rounded,
+      'color': AppColors.secondary,
+      'route': AppRoutes.coding,
+      'category': 'AI & Skill Centers',
+    },
+    {
+      'title': 'Student Career Center',
+      'subtitle': 'Resume builder & internship/job application tracker',
+      'icon': Icons.work_outline_rounded,
+      'color': AppColors.success,
+      'route': AppRoutes.career,
+      'category': 'AI & Skill Centers',
+    },
+    {
+      'title': 'Collaborative Study Groups',
+      'subtitle': 'Shared study plans, notes & group join codes',
+      'icon': Icons.groups_rounded,
+      'color': AppColors.info,
+      'route': AppRoutes.studyGroups,
+      'category': 'AI & Skill Centers',
+    },
+
+    // Academic Calculators
+    {
+      'title': 'CGPA & SGPA Calculator',
+      'subtitle': 'Course credits weighted grade point calculation',
+      'icon': Icons.calculate_rounded,
+      'color': AppColors.primary,
+      'route': AppRoutes.cgpaCalculator,
+      'category': 'Grade Calculators',
+    },
+    {
+      'title': 'Multi-Subject Marks Calculator',
+      'subtitle': 'Cumulative marks, percentages & letter grades',
+      'icon': Icons.view_list_rounded,
+      'color': AppColors.secondary,
+      'route': AppRoutes.multiSubjectCalculator,
+      'category': 'Grade Calculators',
+    },
     {
       'title': 'Percentage Calculator',
       'subtitle': 'Instant single exam percentage',
       'icon': Icons.percent_rounded,
       'color': AppColors.info,
       'route': AppRoutes.percentageCalculator,
-      'category': 'Study Tools',
+      'category': 'Grade Calculators',
     },
-    {
-      'title': 'Multi-Subject Marks Calculator',
-      'subtitle': 'Cumulative marks, percentages & letter grades',
-      'icon': Icons.calculate_rounded,
-      'color': AppColors.primary,
-      'route': AppRoutes.multiSubjectCalculator,
-      'category': 'Study Tools',
-    },
-    {
-      'title': 'Study Tips & Habits',
-      'subtitle': 'Evidence-based cognitive study techniques',
-      'icon': Icons.lightbulb_rounded,
-      'color': AppColors.warning,
-      'route': AppRoutes.studyTips,
-      'category': 'Study Tools',
-    },
+
+    // Insights & Tips
     {
       'title': 'Study Analytics & Insights',
       'subtitle': 'Weekly charts, streaks, and subject distribution',
       'icon': Icons.insights_rounded,
       'color': AppColors.secondary,
       'route': AppRoutes.studyStatistics,
-      'category': 'Study Tools',
+      'category': 'Insights & Tips',
+    },
+    {
+      'title': 'Evidence-Based Study Tips',
+      'subtitle': 'Cognitive study techniques for memory retention',
+      'icon': Icons.lightbulb_rounded,
+      'color': AppColors.warning,
+      'route': AppRoutes.studyTips,
+      'category': 'Insights & Tips',
     },
     // Settings & Support
     {

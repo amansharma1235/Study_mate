@@ -46,6 +46,45 @@ class AppRoutes {
   // Calculator
   static const String percentageCalculator = '/calculator/percentage';
   static const String multiSubjectCalculator = '/calculator/multi-subject';
+  static const String cgpaCalculator = '/calculator/cgpa';
+
+  // Smart Study Planner
+  static const String planner = '/planner';
+  static const String createPlan = '/planner/create';
+
+  // Flashcards & Spaced Repetition
+  static const String flashcards = '/flashcards';
+  static const String flashcardsReview = '/flashcards/review';
+  static const String createDeck = '/flashcards/create-deck';
+
+  // Syllabus & Revision Tracker
+  static const String syllabus = '/syllabus';
+  static const String addSyllabusTopic = '/syllabus/add';
+
+  // AI Study Assistant
+  static const String aiAssistant = '/ai-assistant';
+
+  // Documents & PDF Tools
+  static const String documents = '/documents';
+
+  // Voice Notes
+  static const String voiceNotes = '/voice-notes';
+
+  // Habits & Productivity
+  static const String habits = '/habits';
+  static const String createHabit = '/habits/create';
+
+  // Coding Practice Center
+  static const String coding = '/coding';
+  static const String codingRoadmap = '/coding/roadmap';
+
+  // Career Center
+  static const String career = '/career';
+  static const String resumeBuilder = '/career/resume';
+  static const String jobTracker = '/career/jobs';
+
+  // Study Groups & Collaborative Sharing
+  static const String studyGroups = '/groups';
 
   // Study Tips
   static const String studyTips = '/study-tips';

@@ -46,6 +46,19 @@ import '../../features/timetable/timetable_screen.dart';
 import '../../features/timer/pomodoro_screen.dart';
 import '../../features/timer/timer_history_screen.dart';
 import '../../features/timer/timer_settings_screen.dart';
+import '../../data/models/flashcard_model.dart';
+import '../../features/planner/planner_screen.dart';
+import '../../features/flashcards/flashcards_screen.dart';
+import '../../features/flashcards/flashcard_review_screen.dart';
+import '../../features/syllabus/syllabus_screen.dart';
+import '../../features/calculator/cgpa_calculator_screen.dart';
+import '../../features/ai_assistant/ai_assistant_screen.dart';
+import '../../features/documents/documents_screen.dart';
+import '../../features/voice_notes/voice_notes_screen.dart';
+import '../../features/habits/habits_screen.dart';
+import '../../features/coding/coding_screen.dart';
+import '../../features/career/career_screen.dart';
+import '../../features/groups/study_groups_screen.dart';
 import 'route_names.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -274,6 +287,79 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.deleteAccount,
         builder: (context, state) => const DeleteAccountScreen(),
+      ),
+
+      // Smart Study Planner
+      GoRoute(
+        path: AppRoutes.planner,
+        builder: (context, state) => const PlannerScreen(),
+      ),
+
+      // Flashcards & Spaced Repetition
+      GoRoute(
+        path: AppRoutes.flashcards,
+        builder: (context, state) => const FlashcardsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.flashcardsReview,
+        builder: (context, state) {
+          final deck = state.extra as FlashcardDeckModel;
+          return FlashcardReviewScreen(deck: deck);
+        },
+      ),
+
+      // Syllabus & Revision
+      GoRoute(
+        path: AppRoutes.syllabus,
+        builder: (context, state) => const SyllabusScreen(),
+      ),
+
+      // CGPA Calculator
+      GoRoute(
+        path: AppRoutes.cgpaCalculator,
+        builder: (context, state) => const CgpaCalculatorScreen(),
+      ),
+
+      // AI Assistant
+      GoRoute(
+        path: AppRoutes.aiAssistant,
+        builder: (context, state) => const AiAssistantScreen(),
+      ),
+
+      // Documents & PDF
+      GoRoute(
+        path: AppRoutes.documents,
+        builder: (context, state) => const DocumentsScreen(),
+      ),
+
+      // Voice Notes
+      GoRoute(
+        path: AppRoutes.voiceNotes,
+        builder: (context, state) => const VoiceNotesScreen(),
+      ),
+
+      // Habits
+      GoRoute(
+        path: AppRoutes.habits,
+        builder: (context, state) => const HabitsScreen(),
+      ),
+
+      // Coding Practice
+      GoRoute(
+        path: AppRoutes.coding,
+        builder: (context, state) => const CodingScreen(),
+      ),
+
+      // Career Center
+      GoRoute(
+        path: AppRoutes.career,
+        builder: (context, state) => const CareerScreen(),
+      ),
+
+      // Study Groups
+      GoRoute(
+        path: AppRoutes.studyGroups,
+        builder: (context, state) => const StudyGroupsScreen(),
       ),
     ],
   );

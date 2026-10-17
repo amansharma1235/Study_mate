@@ -1,6 +1,7 @@
 enum SyncStatus {
   synced,
   pendingSync,
+  pending,
   failed,
   offlineOnly;
 
