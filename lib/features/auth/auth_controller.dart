@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/user_profile_model.dart';
 import '../../data/remote/auth_service.dart';
+import '../../data/remote/sync_service.dart';
 
 final authStateProvider = StreamProvider<UserProfileModel?>((ref) {
   final authService = ref.watch(authServiceProvider);
@@ -29,6 +30,9 @@ class AuthController extends StateNotifier<AsyncValue<UserProfileModel?>> {
     final user = await _authService.getCurrentUser();
     state = AsyncValue.data(user);
     _ref.read(currentProfileProvider.notifier).state = user;
+    if (user != null && user.uid.isNotEmpty) {
+      _ref.read(syncStateProvider.notifier).triggerSync(user.uid);
+    }
   }
 
   Future<void> login(String email, String password) async {
@@ -39,6 +43,9 @@ class AuthController extends StateNotifier<AsyncValue<UserProfileModel?>> {
         password: password,
       );
       _ref.read(currentProfileProvider.notifier).state = user;
+      if (user.uid.isNotEmpty) {
+        _ref.read(syncStateProvider.notifier).triggerSync(user.uid);
+      }
       return user;
     });
   }
@@ -52,6 +59,9 @@ class AuthController extends StateNotifier<AsyncValue<UserProfileModel?>> {
         password: password,
       );
       _ref.read(currentProfileProvider.notifier).state = user;
+      if (user.uid.isNotEmpty) {
+        _ref.read(syncStateProvider.notifier).triggerSync(user.uid);
+      }
       return user;
     });
   }

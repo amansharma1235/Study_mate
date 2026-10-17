@@ -63,14 +63,51 @@ class AuthService {
     if (isFirebaseActive) {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        return UserProfileModel(
+        String displayName = user.displayName ?? '';
+        String? photoUrl = user.photoURL;
+        int dailyGoal = 120;
+
+        if (_firebaseService.firestore != null) {
+          try {
+            final doc = await _firebaseService.firestore!
+                .collection('users')
+                .doc(user.uid)
+                .get();
+            if (doc.exists && doc.data() != null) {
+              final d = doc.data()!;
+              if ((d['displayName'] as String?)?.isNotEmpty == true) {
+                displayName = d['displayName'] as String;
+              }
+              if ((d['photoUrl'] as String?)?.isNotEmpty == true) {
+                photoUrl = d['photoUrl'] as String;
+              }
+              if (d['dailyGoalMinutes'] != null) {
+                dailyGoal = (d['dailyGoalMinutes'] as num).toInt();
+              }
+            }
+          } catch (_) {}
+        }
+
+        if (displayName.isEmpty) {
+          displayName = (user.email?.split('@').first) ?? 'Student';
+        }
+
+        final profile = UserProfileModel(
           uid: user.uid,
           email: user.email ?? '',
-          displayName: user.displayName ?? 'Student',
-          photoUrl: user.photoURL,
+          displayName: displayName,
+          photoUrl: photoUrl,
+          dailyGoalMinutes: dailyGoal,
           createdAt: user.metadata.creationTime ?? DateTime.now(),
           updatedAt: DateTime.now(),
         );
+
+        await _secureStorage.write(
+          key: _keySessionUser,
+          value: jsonEncode(profile.toMap()),
+        );
+
+        return profile;
       }
       return null;
     } else {
@@ -225,14 +262,26 @@ class AuthService {
         if (user == null) throw const AuthException('Sign in failed.');
 
         String displayName = user.displayName ?? '';
-        if (displayName.isEmpty && _firebaseService.firestore != null) {
+        String? photoUrl = user.photoURL;
+        int dailyGoal = 120;
+
+        if (_firebaseService.firestore != null) {
           try {
             final doc = await _firebaseService.firestore!
                 .collection('users')
                 .doc(user.uid)
                 .get();
             if (doc.exists && doc.data() != null) {
-              displayName = doc.data()!['displayName'] as String? ?? '';
+              final d = doc.data()!;
+              if ((d['displayName'] as String?)?.isNotEmpty == true) {
+                displayName = d['displayName'] as String;
+              }
+              if ((d['photoUrl'] as String?)?.isNotEmpty == true) {
+                photoUrl = d['photoUrl'] as String;
+              }
+              if (d['dailyGoalMinutes'] != null) {
+                dailyGoal = (d['dailyGoalMinutes'] as num).toInt();
+              }
             }
           } catch (_) {}
         }
@@ -244,7 +293,8 @@ class AuthService {
           uid: user.uid,
           email: user.email ?? email.trim(),
           displayName: displayName,
-          photoUrl: user.photoURL,
+          photoUrl: photoUrl,
+          dailyGoalMinutes: dailyGoal,
           createdAt: user.metadata.creationTime ?? DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -360,6 +410,24 @@ class AuthService {
         if (user != null) {
           await user.updateDisplayName(displayName);
           if (photoUrl != null) await user.updatePhotoURL(photoUrl);
+
+          if (_firebaseService.firestore != null) {
+            try {
+              await _firebaseService.firestore!
+                  .collection('users')
+                  .doc(user.uid)
+                  .set({
+                    'uid': user.uid,
+                    'email': user.email ?? '',
+                    'displayName': displayName,
+                    'photoUrl': ?photoUrl,
+                    'dailyGoalMinutes': ?dailyGoalMinutes,
+                    'updatedAt': DateTime.now().toIso8601String(),
+                  }, SetOptions(merge: true));
+            } catch (e) {
+              debugPrint('Warning: Cloud profile sync: $e');
+            }
+          }
         }
       }
 

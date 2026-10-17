@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../data/local/app_database.dart';
 import '../../data/models/flashcard_model.dart';
+import '../../data/remote/firebase_service.dart';
 import '../auth/auth_controller.dart';
 
 final flashcardDecksProvider =
@@ -12,25 +14,50 @@ final flashcardDecksProvider =
     >((ref) {
       final db = ref.watch(appDatabaseProvider);
       final user = ref.watch(currentProfileProvider);
+      final firebaseService = ref.watch(firebaseServiceProvider);
       final userId = user?.uid ?? 'guest';
-      return FlashcardDecksController(db, userId);
+      return FlashcardDecksController(db, userId, firebaseService: firebaseService);
     });
 
 class FlashcardDecksController
     extends StateNotifier<AsyncValue<List<FlashcardDeckModel>>> {
   final AppDatabase _db;
   final String _userId;
+  final FirebaseService? firebaseService;
 
-  FlashcardDecksController(this._db, this._userId)
-    : super(const AsyncValue.loading()) {
+  FlashcardDecksController(
+    this._db,
+    this._userId, {
+    this.firebaseService,
+  }) : super(const AsyncValue.loading()) {
     loadDecks();
   }
 
   Future<void> loadDecks() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(
-      () async => await _db.getFlashcardDecks(_userId),
-    );
+    state = await AsyncValue.guard(() async {
+      final local = await _db.getFlashcardDecks(_userId);
+      final fb = firebaseService;
+      if (fb != null &&
+          fb.isConfigured &&
+          _userId.isNotEmpty &&
+          _userId != 'guest') {
+        _syncRemoteDecks().catchError((e) {
+          debugPrint('Flashcards remote sync notice: $e');
+        });
+      }
+      return local;
+    });
+  }
+
+  Future<void> _syncRemoteDecks() async {
+    final col = firebaseService?.getUserCollection(_userId, 'flashcard_decks');
+    if (col == null) return;
+    final snap = await col.get();
+    for (final doc in snap.docs) {
+      final deck = FlashcardDeckModel.fromMap(doc.data());
+      await _db.insertFlashcardDeck(deck);
+    }
   }
 
   Future<void> createDeck({
@@ -50,11 +77,43 @@ class FlashcardDecksController
     );
 
     await _db.insertFlashcardDeck(deck);
+
+    final fb = firebaseService;
+    if (fb != null &&
+        fb.isConfigured &&
+        _userId.isNotEmpty &&
+        _userId != 'guest') {
+      try {
+        final col = fb.getUserCollection(
+          _userId,
+          'flashcard_decks',
+        );
+        await col?.doc(deck.id).set(deck.toMap());
+      } catch (e) {
+        debugPrint('Cloud deck upload notice: $e');
+      }
+    }
+
     await loadDecks();
   }
 
   Future<void> deleteDeck(String id) async {
     await _db.deleteFlashcardDeck(id);
+
+    final fb = firebaseService;
+    if (fb != null &&
+        fb.isConfigured &&
+        _userId.isNotEmpty &&
+        _userId != 'guest') {
+      try {
+        final col = fb.getUserCollection(
+          _userId,
+          'flashcard_decks',
+        );
+        await col?.doc(id).delete();
+      } catch (_) {}
+    }
+
     await loadDecks();
   }
 
@@ -77,6 +136,18 @@ class FlashcardDecksController
     );
 
     await _db.insertFlashcard(card);
+
+    final fb = firebaseService;
+    if (fb != null &&
+        fb.isConfigured &&
+        _userId.isNotEmpty &&
+        _userId != 'guest') {
+      try {
+        final col = fb.getUserCollection(_userId, 'flashcards');
+        await col?.doc(card.id).set(card.toMap());
+      } catch (_) {}
+    }
+
     await loadDecks();
   }
 
@@ -90,18 +161,21 @@ class FlashcardDecksController
         'color': '#6258E8',
         'cards': [
           {
-            'front': 'What is the time complexity of searching in a Balanced Binary Search Tree (AVL/Red-Black)?',
+            'front':
+                'What is the time complexity of searching in a Balanced Binary Search Tree (AVL/Red-Black)?',
             'back': 'O(log n) in both average and worst cases.',
             'hint': 'Logarithmic based on tree height.',
           },
           {
             'front': 'What is the difference between BFS and DFS?',
-            'back': 'BFS explores level-by-level using a Queue (FIFO).\nDFS explores as deep as possible using a Stack (LIFO) or recursion.',
+            'back':
+                'BFS explores level-by-level using a Queue (FIFO).\nDFS explores as deep as possible using a Stack (LIFO) or recursion.',
             'hint': 'Queue vs Stack',
           },
           {
             'front': 'What are the 4 fundamental pillars of OOP?',
-            'back': '1. Encapsulation\n2. Abstraction\n3. Inheritance\n4. Polymorphism',
+            'back':
+                '1. Encapsulation\n2. Abstraction\n3. Inheritance\n4. Polymorphism',
             'hint': 'E.A.I.P',
           },
         ],
@@ -114,12 +188,14 @@ class FlashcardDecksController
         'cards': [
           {
             'front': 'State Newton\'s Second Law of Motion.',
-            'back': 'Force equals the rate of change of momentum: F = ma (when mass is constant).',
+            'back':
+                'Force equals the rate of change of momentum: F = ma (when mass is constant).',
             'hint': 'F = ?',
           },
           {
             'front': 'What is the Work-Energy Theorem?',
-            'back': 'Net work done on an object equals the change in its kinetic energy: W_net = ΔKE.',
+            'back':
+                'Net work done on an object equals the change in its kinetic energy: W_net = ΔKE.',
             'hint': 'Work = change in energy',
           },
         ],

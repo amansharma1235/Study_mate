@@ -8,6 +8,7 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_text_field.dart';
 import '../../data/local/app_database.dart';
 import '../../data/models/habit_model.dart';
+import '../../data/remote/firebase_service.dart';
 import '../auth/auth_controller.dart';
 
 class HabitsScreen extends ConsumerStatefulWidget {
@@ -31,6 +32,24 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
     final user = ref.read(currentProfileProvider);
     final userId = user?.uid ?? 'guest';
     final db = ref.read(appDatabaseProvider);
+    final firebaseService = ref.read(firebaseServiceProvider);
+
+    // Sync remote habits from Firestore if configured
+    if (firebaseService.isConfigured && userId.isNotEmpty && userId != 'guest') {
+      try {
+        final col = firebaseService.getUserCollection(userId, 'habits');
+        if (col != null) {
+          final snap = await col.get();
+          for (final doc in snap.docs) {
+            final remoteHabit = HabitModel.fromMap(doc.data());
+            await db.insertHabit(remoteHabit);
+          }
+        }
+      } catch (e) {
+        debugPrint('Remote habits pull notice: $e');
+      }
+    }
+
     var list = await db.getHabits(userId);
 
     if (list.isEmpty) {
@@ -85,6 +104,19 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
     final updated = habit.toggleToday();
     final db = ref.read(appDatabaseProvider);
     await db.updateHabit(updated);
+
+    final user = ref.read(currentProfileProvider);
+    final userId = user?.uid ?? 'guest';
+    final firebaseService = ref.read(firebaseServiceProvider);
+    if (firebaseService.isConfigured && userId.isNotEmpty && userId != 'guest') {
+      try {
+        final col = firebaseService.getUserCollection(userId, 'habits');
+        await col?.doc(updated.id).set(updated.toMap());
+      } catch (e) {
+        debugPrint('Warning updating cloud habit: $e');
+      }
+    }
+
     _loadHabits();
   }
 
@@ -326,6 +358,15 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
               icon: const Icon(Icons.delete_outline_rounded, size: 18),
               onPressed: () async {
                 await ref.read(appDatabaseProvider).deleteHabit(habit.id);
+                final user = ref.read(currentProfileProvider);
+                final userId = user?.uid ?? 'guest';
+                final firebaseService = ref.read(firebaseServiceProvider);
+                if (firebaseService.isConfigured && userId.isNotEmpty && userId != 'guest') {
+                  try {
+                    final col = firebaseService.getUserCollection(userId, 'habits');
+                    await col?.doc(habit.id).delete();
+                  } catch (_) {}
+                }
                 _loadHabits();
               },
             ),
@@ -383,6 +424,13 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
                 targetDaysPerWeek: 7,
               );
               await ref.read(appDatabaseProvider).insertHabit(newHabit);
+              final firebaseService = ref.read(firebaseServiceProvider);
+              if (firebaseService.isConfigured && userId.isNotEmpty && userId != 'guest') {
+                try {
+                  final col = firebaseService.getUserCollection(userId, 'habits');
+                  await col?.doc(newHabit.id).set(newHabit.toMap());
+                } catch (_) {}
+              }
               if (ctx.mounted) Navigator.pop(ctx);
               _loadHabits();
             },

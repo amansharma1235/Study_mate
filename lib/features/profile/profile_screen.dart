@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
@@ -8,6 +9,8 @@ import '../../core/routing/route_names.dart';
 import '../../core/widgets/app_button.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_dialogs.dart';
+import '../../core/widgets/user_avatar.dart';
+import '../../data/remote/sync_service.dart';
 import '../auth/auth_controller.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -17,6 +20,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = ref.watch(currentProfileProvider);
+    final syncState = ref.watch(syncStateProvider);
 
     return Scaffold(
       backgroundColor: isDark
@@ -30,6 +34,7 @@ class ProfileScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Edit Profile',
             onPressed: () => context.push(AppRoutes.editProfile),
           ),
         ],
@@ -42,37 +47,12 @@ class ProfileScreen extends ConsumerWidget {
             Center(
               child: Column(
                 children: [
-                  Container(
-                    width: 90,
-                    height: 90,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.primary, AppColors.secondary],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        (user?.displayName.isNotEmpty == true
-                                ? user!.displayName[0]
-                                : 'S')
-                            .toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                  UserAvatar(
+                    photoUrl: user?.photoUrl,
+                    name: user?.displayName ?? 'Student',
+                    size: 92,
+                    showEditBadge: true,
+                    onTap: () => context.push(AppRoutes.editProfile),
                   ),
                   const SizedBox(height: 14),
                   Text(
@@ -100,6 +80,139 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppDimensions.space24),
 
+            // Cloud Synchronization Card
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.cloud_sync_rounded,
+                          color: AppColors.primary,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Cloud Sync (Firestore)',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: syncState.isCloudConnected
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFFF59E0B),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  syncState.isCloudConnected
+                                      ? 'Connected to studymate-e8da6'
+                                      : 'Local offline cache',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: isDark
+                                        ? AppColors.textSecondaryDark
+                                        : AppColors.textSecondaryLight,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (syncState.isSyncing)
+                        const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2.4),
+                        )
+                      else
+                        IconButton(
+                          icon: const Icon(Icons.sync_rounded),
+                          tooltip: 'Sync Now',
+                          color: AppColors.primary,
+                          onPressed: () async {
+                            if (user == null || user.uid.isEmpty) return;
+                            final res = await ref
+                                .read(syncStateProvider.notifier)
+                                .triggerSync(user.uid);
+                            if (context.mounted) {
+                              if (res.isSuccess) {
+                                AppDialogs.showSnackBar(
+                                  context,
+                                  message:
+                                      'Synced ${res.totalItems} items with Firestore successfully!',
+                                  isSuccess: true,
+                                );
+                              } else {
+                                AppDialogs.showSnackBar(
+                                  context,
+                                  message:
+                                      'Sync notice: ${res.errorMessage ?? "Could not reach cloud"}',
+                                  isError: true,
+                                );
+                              }
+                            }
+                          },
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(height: 1),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Last Synced:',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                        ),
+                      ),
+                      Text(
+                        syncState.lastSyncedAt != null
+                            ? DateFormat('hh:mm a, MMM d')
+                                .format(syncState.lastSyncedAt!)
+                            : 'On sign-in / Pending',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimaryLight,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppDimensions.space16),
+
             // Profile Info Card
             AppCard(
               child: Column(
@@ -119,9 +232,9 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   const Divider(height: 24),
                   _buildProfileRow(
-                    icon: Icons.cloud_sync_rounded,
-                    title: 'Cloud Synchronization',
-                    value: 'Offline-First SQLite + Firestore',
+                    icon: Icons.storage_rounded,
+                    title: 'Database Engine',
+                    value: 'Offline-First SQLite',
                     isDark: isDark,
                   ),
                 ],
@@ -137,7 +250,7 @@ class ProfileScreen extends ConsumerWidget {
                   _buildMenuTile(
                     context,
                     icon: Icons.edit_note_rounded,
-                    title: 'Edit Profile Information',
+                    title: 'Edit Profile & Student Avatar',
                     onTap: () => context.push(AppRoutes.editProfile),
                     isDark: isDark,
                   ),

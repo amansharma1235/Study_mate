@@ -6,16 +6,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../local/app_database.dart';
 import '../models/quiz_model.dart';
 
+import '../remote/firebase_service.dart';
+
 final quizRepositoryProvider = Provider<QuizRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
-  return QuizRepository(db);
+  final firebaseService = ref.watch(firebaseServiceProvider);
+  return QuizRepository(db, firebaseService: firebaseService);
 });
 
 class QuizRepository {
   final AppDatabase _db;
+  final FirebaseService? firebaseService;
   List<QuizQuestion>? _cachedQuestions;
 
-  QuizRepository(this._db);
+  QuizRepository(this._db, {this.firebaseService});
 
   Future<List<QuizQuestion>> getAllQuestions() async {
     if (_cachedQuestions != null) return _cachedQuestions!;
@@ -46,9 +50,46 @@ class QuizRepository {
 
   Future<void> saveAttempt(QuizAttempt attempt) async {
     await _db.insertQuizAttempt(attempt);
+
+    final fb = firebaseService;
+    if (fb != null && fb.isConfigured && attempt.userId.isNotEmpty) {
+      try {
+        final col = fb.getUserCollection(
+          attempt.userId,
+          'quiz_attempts',
+        );
+        if (col != null) {
+          await col.doc(attempt.id).set(attempt.toMap());
+        }
+      } catch (e) {
+        // Soft fallback
+      }
+    }
   }
 
   Future<List<QuizAttempt>> getAttempts(String userId) async {
-    return await _db.getQuizAttempts(userId);
+    final localAttempts = await _db.getQuizAttempts(userId);
+
+    final fb = firebaseService;
+    if (fb != null && fb.isConfigured && userId.isNotEmpty) {
+      _syncFromRemote(userId).catchError((_) => <QuizAttempt>[]);
+    }
+
+    return localAttempts;
+  }
+
+  Future<List<QuizAttempt>> _syncFromRemote(String userId) async {
+    final col = firebaseService?.getUserCollection(userId, 'quiz_attempts');
+    if (col == null) return [];
+
+    final snap = await col.get();
+    final remoteAttempts = snap.docs
+        .map((doc) => QuizAttempt.fromMap(doc.data()))
+        .toList();
+
+    for (final attempt in remoteAttempts) {
+      await _db.insertQuizAttempt(attempt);
+    }
+    return remoteAttempts;
   }
 }

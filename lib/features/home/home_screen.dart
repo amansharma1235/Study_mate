@@ -10,6 +10,9 @@ import '../../core/routing/route_names.dart';
 import '../../core/utils/date_formatter.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/loading_skeleton.dart';
+import '../../core/widgets/user_avatar.dart';
+import '../../data/remote/sync_service.dart';
+import '../auth/auth_controller.dart';
 import '../notes/notes_controller.dart';
 import 'home_controller.dart';
 
@@ -19,6 +22,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final user = ref.watch(currentProfileProvider);
     final dashboardAsync = ref.watch(homeDashboardProvider);
     final notesState = ref.watch(notesControllerProvider);
 
@@ -99,10 +103,17 @@ class HomeScreen extends ConsumerWidget {
             tooltip: 'Statistics',
             onPressed: () => context.push(AppRoutes.studyStatistics),
           ),
-          IconButton(
-            icon: const Icon(Icons.person_outline_rounded),
-            tooltip: 'Profile',
-            onPressed: () => context.push(AppRoutes.profile),
+          InkWell(
+            onTap: () => context.push(AppRoutes.profile),
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              child: UserAvatar(
+                photoUrl: user?.photoUrl,
+                name: user?.displayName ?? 'Student',
+                size: 34,
+              ),
+            ),
           ),
           const SizedBox(width: 8),
         ],
@@ -126,6 +137,9 @@ class HomeScreen extends ConsumerWidget {
           onRefresh: () async {
             ref.invalidate(homeDashboardProvider);
             ref.read(notesControllerProvider.notifier).loadNotes();
+            if (user != null && user.uid.isNotEmpty) {
+              await ref.read(syncStateProvider.notifier).triggerSync(user.uid);
+            }
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
