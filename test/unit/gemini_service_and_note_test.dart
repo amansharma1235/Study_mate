@@ -22,25 +22,39 @@ void main() {
       expect(resp.finishReason, 'STOP');
     });
 
-    test('generateFlashcardsFromNote generates cards with offline fallback', () async {
-      final service = GeminiService();
-      final cards = await service.generateFlashcardsFromNote(
-        title: 'Operating Systems Virtual Memory',
-        content: '• Paging: Divides memory into fixed-size frames.\n• TLB: Translation Lookaside Buffer caches page entries.\n• Thrashing: Occurs when excessive paging leads to constant disk I/O.',
-        apiKey: '', // Empty key triggers resilient offline extractor
-      );
+    test(
+      'generateFlashcardsFromNote generates cards with offline fallback',
+      () async {
+        final service = GeminiService();
+        final cards = await service.generateFlashcardsFromNote(
+          title: 'Operating Systems Virtual Memory',
+          content: '• Paging: Divides memory into fixed-size frames.\n• TLB: Translation Lookaside Buffer caches page entries.\n• Thrashing: Occurs when excessive paging leads to constant disk I/O.',
+          apiKey: '', // Empty key triggers resilient offline extractor
+        );
 
-      expect(cards, isNotEmpty);
-      expect(cards.length, greaterThanOrEqualTo(2));
-      expect(cards.any((c) => c['question']!.contains('Paging') || c['question']!.contains('Operating Systems')), isTrue);
-    });
+        expect(cards, isNotEmpty);
+        expect(cards.length, greaterThanOrEqualTo(2));
+        expect(
+          cards.any(
+            (c) =>
+                c['question']!.contains('Paging') ||
+                c['question']!.contains('Operating Systems'),
+          ),
+          isTrue,
+        );
+      },
+    );
   });
 
   group('Note Metrics & Integrity Unit Tests', () {
     test('Calculates word count and reading time correctly', () {
       const content =
           'Distributed consensus ensures all nodes agree on a single data value in distributed systems.';
-      final words = content.trim().split(RegExp(r'\s+')).where((s) => s.isNotEmpty).length;
+      final words = content
+          .trim()
+          .split(RegExp(r'\s+'))
+          .where((s) => s.isNotEmpty)
+          .length;
       expect(words, 14);
 
       final readingMinutes = (words / 200).ceil();
