@@ -210,30 +210,35 @@ class QuizCategoriesScreen extends ConsumerWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  a.category,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                    color: isDark
-                                        ? AppColors.textPrimaryDark
-                                        : AppColors.textPrimaryLight,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    a.category,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: isDark
+                                          ? AppColors.textPrimaryDark
+                                          : AppColors.textPrimaryLight,
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  '${a.correctAnswers} / ${a.totalQuestions} correct',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: isDark
-                                        ? AppColors.textSecondaryDark
-                                        : AppColors.textSecondaryLight,
+                                  Text(
+                                    '${a.correctAnswers} / ${a.totalQuestions} correct',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark
+                                          ? AppColors.textSecondaryDark
+                                          : AppColors.textSecondaryLight,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 10,

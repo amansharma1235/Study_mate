@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:go_router/go_router.dart';
+import '../../core/routing/route_names.dart';
+import '../../data/local/preference_service.dart';
+import '../../data/remote/gemini_service.dart';
+import '../quiz/quiz_controller.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/widgets/app_button.dart';
@@ -175,8 +180,10 @@ class SyllabusScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      Wrap(
+                        alignment: WrapAlignment.spaceAround,
+                        spacing: 12,
+                        runSpacing: 6,
                         children: [
                           _buildMiniStat(
                             'Completed',
@@ -324,25 +331,29 @@ class SyllabusScreen extends ConsumerWidget {
             Row(
               children: [
                 // Subject / Chapter Tag
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '${topic.subject} • ${topic.chapter}',
-                    style: const TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${topic.subject} • ${topic.chapter}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
 
                 // Status Badge Dropdown
                 PopupMenuButton<String>(
@@ -431,6 +442,29 @@ class SyllabusScreen extends ConsumerWidget {
                 ),
                 const Spacer(),
 
+                // AI Practice Quiz Button
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secondary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
+                    minimumSize: Size.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                  icon: const Icon(Icons.quiz_rounded, size: 14),
+                  label: const Text(
+                    'AI Quiz',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                  ),
+                  onPressed: () => _generateTopicQuiz(context, ref, topic),
+                ),
+                const SizedBox(width: 8),
+
                 // Mark Revised Button
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
@@ -468,6 +502,54 @@ class SyllabusScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _generateTopicQuiz(
+    BuildContext context,
+    WidgetRef ref,
+    SyllabusTopicModel topic,
+  ) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text('Preparing AI Practice Quiz for "${topic.title}"...'),
+            ),
+          ],
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    String apiKey = '';
+    try {
+      apiKey = ref.read(preferenceServiceProvider).getGeminiApiKey();
+    } catch (_) {}
+
+    final questions = await ref
+        .read(geminiServiceProvider)
+        .generateQuizForTopic(
+          topic: topic.title,
+          subject: topic.subject,
+          apiKey: apiKey,
+        );
+
+    if (context.mounted) {
+      ref
+          .read(quizSessionControllerProvider.notifier)
+          .startCustomQuiz('${topic.subject}: ${topic.title}', questions);
+      context.push(AppRoutes.quizQuestions);
+    }
   }
 
   void _showAddTopicDialog(BuildContext context, WidgetRef ref) {

@@ -51,6 +51,22 @@ class _MoreToolsScreenState extends State<MoreToolsScreen> {
       'category': 'Study Tools',
     },
     {
+      'title': 'Virtual Study Garden & Coins',
+      'subtitle': 'Forest-style focus trees, plant nursery & coin rewards',
+      'icon': Icons.park_rounded,
+      'color': AppColors.success,
+      'route': AppRoutes.studyGarden,
+      'category': 'Study Tools',
+    },
+    {
+      'title': 'Weekly Focus Arena & Leaderboard',
+      'subtitle': 'YPT-style study podium, peer rankings & streak tiers',
+      'icon': Icons.emoji_events_rounded,
+      'color': const Color(0xFFF59E0B),
+      'route': AppRoutes.leaderboard,
+      'category': 'Study Tools',
+    },
+    {
       'title': 'Daily Study Habits',
       'subtitle': 'Habit streak tracking & daily goal targets',
       'icon': Icons.local_fire_department_rounded,

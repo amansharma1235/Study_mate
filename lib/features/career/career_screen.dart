@@ -148,13 +148,18 @@ class _CareerScreenState extends ConsumerState<CareerScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      job.company,
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                    Expanded(
+                      child: Text(
+                        job.company,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -187,39 +192,50 @@ class _CareerScreenState extends ConsumerState<CareerScreen>
                   ),
                 ),
                 const SizedBox(height: 6),
-                Row(
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 4,
                   children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 14,
-                      color: AppColors.textMutedLight,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      job.location,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondaryLight,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    if (job.stipendOrSalary.isNotEmpty) ...[
-                      Icon(
-                        Icons.payments_outlined,
-                        size: 14,
-                        color: AppColors.textMutedLight,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        job.stipendOrSalary,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.location_on_outlined,
+                          size: 14,
+                          color: AppColors.textMutedLight,
                         ),
+                        const SizedBox(width: 4),
+                        Text(
+                          job.location,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (job.stipendOrSalary.isNotEmpty) ...[
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.payments_outlined,
+                            size: 14,
+                            color: AppColors.textMutedLight,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            job.stipendOrSalary,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ],
@@ -272,13 +288,18 @@ class _CareerScreenState extends ConsumerState<CareerScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '📄 Student Master Resume',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                    Expanded(
+                      child: Text(
+                        '📄 Student Master Resume',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,

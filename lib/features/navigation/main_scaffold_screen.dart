@@ -80,7 +80,7 @@ class MainScaffoldScreen extends StatelessWidget {
           backgroundColor: isDark
               ? AppColors.surfaceDark
               : AppColors.surfaceLight,
-          selectedItemColor: AppColors.primary,
+          selectedItemColor: Theme.of(context).primaryColor,
           unselectedItemColor: isDark
               ? AppColors.textMutedDark
               : AppColors.textSecondaryLight,

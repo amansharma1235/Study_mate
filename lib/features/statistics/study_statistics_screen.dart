@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/utils/date_formatter.dart';
 import '../../core/widgets/app_card.dart';
+import '../../core/widgets/study_heatmap_matrix.dart';
 import '../home/home_controller.dart';
 import '../timer/timer_history_screen.dart';
 
@@ -212,6 +213,42 @@ class StudyStatisticsScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: AppDimensions.space20),
+
+              // 365-Day Study Activity Matrix (GitHub Style)
+              historyAsync.when(
+                loading: () => const SizedBox(),
+                error: (_, _) => const SizedBox(),
+                data: (sessions) {
+                  final Map<DateTime, int> activityMap = {};
+                  for (final s in sessions) {
+                    final d = DateTime(
+                      s.completedAt.year,
+                      s.completedAt.month,
+                      s.completedAt.day,
+                    );
+                    activityMap[d] =
+                        (activityMap[d] ?? 0) + s.durationMinutes;
+                  }
+                  // Ensure today's minutes from dashboard are included
+                  final today = DateTime(
+                    DateTime.now().year,
+                    DateTime.now().month,
+                    DateTime.now().day,
+                  );
+                  activityMap[today] = (activityMap[today] ?? 0) >
+                          data.todayStudyMinutes
+                      ? activityMap[today]!
+                      : data.todayStudyMinutes;
+
+                  return AppCard(
+                    child: StudyHeatmapMatrix(
+                      activityData: activityMap,
+                      weeksToShow: 18,
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: AppDimensions.space20),
 

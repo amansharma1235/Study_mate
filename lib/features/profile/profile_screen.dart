@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -9,9 +10,12 @@ import '../../core/routing/route_names.dart';
 import '../../core/widgets/app_button.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_dialogs.dart';
+import '../../core/widgets/study_heatmap_matrix.dart';
 import '../../core/widgets/user_avatar.dart';
 import '../../data/remote/sync_service.dart';
 import '../auth/auth_controller.dart';
+import '../home/home_controller.dart';
+import '../timer/timer_history_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -21,6 +25,8 @@ class ProfileScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = ref.watch(currentProfileProvider);
     final syncState = ref.watch(syncStateProvider);
+    final dashboardAsync = ref.watch(homeDashboardProvider);
+    final historyAsync = ref.watch(studyHistoryProvider);
 
     return Scaffold(
       backgroundColor: isDark
@@ -52,7 +58,7 @@ class ProfileScreen extends ConsumerWidget {
                     name: user?.displayName ?? 'Student',
                     size: 92,
                     showEditBadge: true,
-                    onTap: () => context.push(AppRoutes.editProfile),
+                    onTap: () => _showAvatarPickerSheet(context, ref),
                   ),
                   const SizedBox(height: 14),
                   Text(
@@ -125,15 +131,19 @@ class ProfileScreen extends ConsumerWidget {
                                   ),
                                 ),
                                 const SizedBox(width: 6),
-                                Text(
-                                  syncState.isCloudConnected
-                                      ? 'Connected to studymate-e8da6'
-                                      : 'Local offline cache',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: isDark
-                                        ? AppColors.textSecondaryDark
-                                        : AppColors.textSecondaryLight,
+                                Expanded(
+                                  child: Text(
+                                    syncState.isCloudConnected
+                                        ? 'Connected to studymate-e8da6'
+                                        : 'Local offline cache',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark
+                                          ? AppColors.textSecondaryDark
+                                          : AppColors.textSecondaryLight,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -193,17 +203,20 @@ class ProfileScreen extends ConsumerWidget {
                               : AppColors.textSecondaryLight,
                         ),
                       ),
-                      Text(
-                        syncState.lastSyncedAt != null
-                            ? DateFormat('hh:mm a, MMM d')
-                                .format(syncState.lastSyncedAt!)
-                            : 'On sign-in / Pending',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
+                      Flexible(
+                        child: Text(
+                          syncState.lastSyncedAt != null
+                              ? DateFormat('hh:mm a, MMM d')
+                                  .format(syncState.lastSyncedAt!)
+                              : 'On sign-in / Pending',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textPrimaryLight,
+                          ),
                         ),
                       ),
                     ],
@@ -240,6 +253,42 @@ class ProfileScreen extends ConsumerWidget {
                 ],
               ),
             ),
+            const SizedBox(height: AppDimensions.space16),
+
+            // Study Activity Heatmap Card (GitHub-Style)
+            historyAsync.when(
+              loading: () => const SizedBox(),
+              error: (_, _) => const SizedBox(),
+              data: (sessions) {
+                final Map<DateTime, int> activityMap = {};
+                for (final s in sessions) {
+                  final d = DateTime(
+                    s.completedAt.year,
+                    s.completedAt.month,
+                    s.completedAt.day,
+                  );
+                  activityMap[d] =
+                      (activityMap[d] ?? 0) + s.durationMinutes;
+                }
+                final todayMins =
+                    dashboardAsync.valueOrNull?.todayStudyMinutes ?? 0;
+                final today = DateTime(
+                  DateTime.now().year,
+                  DateTime.now().month,
+                  DateTime.now().day,
+                );
+                activityMap[today] = (activityMap[today] ?? 0) > todayMins
+                    ? activityMap[today]!
+                    : todayMins;
+
+                return AppCard(
+                  child: StudyHeatmapMatrix(
+                    activityData: activityMap,
+                    weeksToShow: 14,
+                  ),
+                );
+              },
+            ),
             const SizedBox(height: AppDimensions.space20),
 
             // Settings Links
@@ -266,6 +315,13 @@ class ProfileScreen extends ConsumerWidget {
                     icon: Icons.palette_outlined,
                     title: 'Appearance & Theme',
                     onTap: () => context.push(AppRoutes.appearanceSettings),
+                    isDark: isDark,
+                  ),
+                  _buildMenuTile(
+                    context,
+                    icon: Icons.lock_outline_rounded,
+                    title: 'App Lock & Passcode 🔒',
+                    onTap: () => context.push(AppRoutes.securityLock),
                     isDark: isDark,
                   ),
                   _buildMenuTile(
@@ -335,14 +391,18 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
+            ),
           ),
         ),
       ],
@@ -378,5 +438,164 @@ class ProfileScreen extends ConsumerWidget {
         onTap: onTap,
       ),
     );
+  }
+
+  void _showAvatarPickerSheet(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor:
+          isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Student Profile Picture',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.photo_library_rounded,
+                      color: AppColors.primary),
+                ),
+                title: const Text('Choose from Gallery',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('Select a photo from your device storage'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImage(context, ref, ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.camera_alt_rounded,
+                      color: AppColors.secondary),
+                ),
+                title: const Text('Take a Photo',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('Use your camera to click a new picture'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickImage(context, ref, ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.face_rounded, color: Colors.amber),
+                ),
+                title: const Text('Preset Student Avatars',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('Pick emoji avatars & customize profile'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  context.push(AppRoutes.editProfile);
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.delete_outline_rounded,
+                      color: Colors.red),
+                ),
+                title: const Text('Remove Photo',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700, color: Colors.red)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final user = ref.read(currentProfileProvider);
+                  await ref
+                      .read(authControllerProvider.notifier)
+                      .updateProfile(
+                        displayName: user?.displayName ?? 'Student',
+                        photoUrl: '',
+                      );
+                  if (context.mounted) {
+                    AppDialogs.showSnackBar(
+                      context,
+                      message: 'Profile photo removed',
+                      isSuccess: true,
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(
+      BuildContext context, WidgetRef ref, ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(
+        source: source,
+        maxWidth: 600,
+        maxHeight: 600,
+        imageQuality: 85,
+      );
+      if (image == null) return;
+
+      final user = ref.read(currentProfileProvider);
+      final currentName = user?.displayName ?? 'Student';
+      await ref.read(authControllerProvider.notifier).updateProfile(
+            displayName: currentName,
+            photoUrl: image.path,
+          );
+      if (context.mounted) {
+        AppDialogs.showSnackBar(
+          context,
+          message: 'Profile picture updated successfully! 📸',
+          isSuccess: true,
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppDialogs.showSnackBar(
+          context,
+          message: 'Unable to select image: $e',
+          isError: true,
+        );
+      }
+    }
   }
 }

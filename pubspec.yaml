@@ -50,6 +50,16 @@ dependencies:
   uuid: ^4.6.0
   google_fonts: ^9.0.0
   flutter_svg: ^2.0.17
+  sqflite_common_ffi: ^2.4.4
+  sqlite3_flutter_libs: ^0.6.0+eol
+  audioplayers: ^6.8.1
+  image_picker: ^1.2.4
+  flutter_tts: ^4.2.5
+  speech_to_text: ^7.5.0
+  file_picker: ^10.2.4
+  pdf: ^3.13.1
+  printing: ^5.15.1
+  timezone: ^0.11.2
 
 dev_dependencies:
   flutter_test:

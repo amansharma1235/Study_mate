@@ -36,6 +36,9 @@ class AppRoutes {
   static const String exams = '/exams';
   static const String addExam = '/exams/add';
   static const String editExam = '/exams/edit';
+  static const String examSimulatorConfig = '/exams/simulator';
+  static const String examSimulatorPlay = '/exams/simulator/play';
+  static const String examSimulatorResult = '/exams/simulator/result';
 
   // Quiz
   static const String quizCategories = '/quiz';
@@ -66,6 +69,8 @@ class AppRoutes {
 
   // Documents & PDF Tools
   static const String documents = '/documents';
+  static const String docExtractor = '/documents/ai-extractor';
+  static const String pdfCheatsheet = '/documents/pdf-cheatsheet';
 
   // Voice Notes
   static const String voiceNotes = '/voice-notes';
@@ -73,6 +78,10 @@ class AppRoutes {
   // Habits & Productivity
   static const String habits = '/habits';
   static const String createHabit = '/habits/create';
+
+  // Virtual Study Garden (Forest-style Gamification)
+  static const String studyGarden = '/garden';
+  static const String leaderboard = '/leaderboard';
 
   // Coding Practice Center
   static const String coding = '/coding';
@@ -98,6 +107,7 @@ class AppRoutes {
   static const String editProfile = '/profile/edit';
   static const String notificationSettings = '/settings/notifications';
   static const String appearanceSettings = '/settings/appearance';
+  static const String securityLock = '/settings/security';
   static const String privacyPolicy = '/settings/privacy-policy';
   static const String termsConditions = '/settings/terms-conditions';
   static const String helpSupport = '/settings/help-support';

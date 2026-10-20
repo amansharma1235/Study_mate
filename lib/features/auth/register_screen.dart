@@ -65,20 +65,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
   }
 
-  Future<void> _handleGoogleSignUp() async {
-    setState(() => _isLoading = true);
-    try {
-      await ref
-          .read(authControllerProvider.notifier)
-          .login('student@studymate.app', 'student123');
-      if (!mounted) return;
-      context.go(AppRoutes.home);
-    } catch (e) {
-      if (!mounted) return;
-      AppDialogs.showSnackBar(context, message: e.toString(), isError: true);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+  void _handleGoogleSignUp() {
+    AppDialogs.showSnackBar(
+      context,
+      message:
+          'Google Sign-Up will be enabled in the next update. Please register with your email and password.',
+    );
   }
 
   @override

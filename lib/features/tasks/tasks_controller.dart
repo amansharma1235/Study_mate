@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../data/models/task_model.dart';
 import '../../data/repositories/tasks_repository.dart';
 import '../auth/auth_controller.dart';
+import '../gamification/gamification_controller.dart';
 
 enum TaskFilter { today, upcoming, completed, all }
 
@@ -15,7 +16,7 @@ final tasksControllerProvider =
       final repo = ref.watch(tasksRepositoryProvider);
       final user = ref.watch(currentProfileProvider);
       final userId = user?.uid ?? 'guest';
-      return TasksController(repo, userId);
+      return TasksController(repo, userId, ref: ref);
     });
 
 final filteredTasksProvider = Provider<List<TaskModel>>((ref) {
@@ -59,9 +60,10 @@ final filteredTasksProvider = Provider<List<TaskModel>>((ref) {
 class TasksController extends StateNotifier<AsyncValue<List<TaskModel>>> {
   final TasksRepository _repo;
   final String _userId;
+  final Ref? ref;
 
-  TasksController(this._repo, this._userId)
-    : super(const AsyncValue.loading()) {
+  TasksController(this._repo, this._userId, {this.ref})
+      : super(const AsyncValue.loading()) {
     loadTasks();
   }
 
@@ -102,7 +104,11 @@ class TasksController extends StateNotifier<AsyncValue<List<TaskModel>>> {
   }
 
   Future<void> toggleTask(TaskModel task) async {
+    final willComplete = !task.isCompleted;
     await _repo.toggleTask(task);
+    if (willComplete) {
+      ref?.read(gamificationControllerProvider.notifier).recordTaskCompleted();
+    }
     await loadTasks();
   }
 

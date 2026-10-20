@@ -129,11 +129,14 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    final cleanEmail = email.trim().toLowerCase();
+    final cleanName = name.trim();
+
     try {
       if (isFirebaseActive) {
         final credential = await FirebaseAuth.instance
             .createUserWithEmailAndPassword(
-              email: email.trim(),
+              email: cleanEmail,
               password: password,
             );
         final user = credential.user;
@@ -141,13 +144,17 @@ class AuthService {
           throw const AuthException('Registration failed. Please try again.');
         }
 
-        await user.updateDisplayName(name.trim());
-        await user.sendEmailVerification();
+        try {
+          await user.updateDisplayName(cleanName);
+        } catch (_) {}
+        try {
+          await user.sendEmailVerification();
+        } catch (_) {}
 
         final profile = UserProfileModel(
           uid: user.uid,
-          email: user.email ?? email.trim(),
-          displayName: name.trim(),
+          email: user.email ?? cleanEmail,
+          displayName: cleanName,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -163,6 +170,13 @@ class AuthService {
           }
         }
 
+        // Cache credentials locally for offline access
+        final users = await _getStoredUsers();
+        users[cleanEmail] = {'password': password, 'profile': profile.toMap()};
+        await _secureStorage.write(
+          key: _keyMockUsers,
+          value: jsonEncode(users),
+        );
         await _secureStorage.write(
           key: _keySessionUser,
           value: jsonEncode(profile.toMap()),
@@ -172,18 +186,17 @@ class AuthService {
       } else {
         // Secure local account registration
         final users = await _getStoredUsers();
-        final cleanEmail = email.trim().toLowerCase();
         if (users.containsKey(cleanEmail)) {
           throw const AuthException(
-            'An account already exists with this email address.',
+            'An account already exists with this email address. Please login.',
           );
         }
 
-        final uid = 'local_user_${DateTime.now().millisecondsSinceEpoch}';
+        final uid = 'student_${DateTime.now().millisecondsSinceEpoch}';
         final profile = UserProfileModel(
           uid: uid,
-          email: email.trim(),
-          displayName: name.trim(),
+          email: cleanEmail,
+          displayName: cleanName,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -219,31 +232,6 @@ class AuthService {
         users = jsonDecode(mockUsersJson) as Map<String, dynamic>;
       } catch (_) {}
     }
-    if (users.isEmpty) {
-      final userAman = UserProfileModel(
-        uid: 'user_aman_default',
-        email: 'aman@studymate.app',
-        displayName: 'Aman',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-      final userRahul = UserProfileModel(
-        uid: 'user_rahul_default',
-        email: 'rahul@studymate.app',
-        displayName: 'Rahul',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-      users['aman@studymate.app'] = {
-        'password': '123',
-        'profile': userAman.toMap(),
-      };
-      users['rahul@studymate.app'] = {
-        'password': '123',
-        'profile': userRahul.toMap(),
-      };
-      await _secureStorage.write(key: _keyMockUsers, value: jsonEncode(users));
-    }
     return users;
   }
 
@@ -251,65 +239,86 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    final cleanEmail = email.trim().toLowerCase();
+
     try {
       if (isFirebaseActive) {
-        final credential = await FirebaseAuth.instance
-            .signInWithEmailAndPassword(
-              email: email.trim(),
-              password: password,
-            );
-        final user = credential.user;
-        if (user == null) throw const AuthException('Sign in failed.');
+        try {
+          final credential = await FirebaseAuth.instance
+              .signInWithEmailAndPassword(
+                email: cleanEmail,
+                password: password,
+              );
+          final user = credential.user;
+          if (user == null) throw const AuthException('Sign in failed.');
 
-        String displayName = user.displayName ?? '';
-        String? photoUrl = user.photoURL;
-        int dailyGoal = 120;
+          String displayName = user.displayName ?? '';
+          String? photoUrl = user.photoURL;
+          int dailyGoal = 120;
 
-        if (_firebaseService.firestore != null) {
-          try {
-            final doc = await _firebaseService.firestore!
-                .collection('users')
-                .doc(user.uid)
-                .get();
-            if (doc.exists && doc.data() != null) {
-              final d = doc.data()!;
-              if ((d['displayName'] as String?)?.isNotEmpty == true) {
-                displayName = d['displayName'] as String;
+          if (_firebaseService.firestore != null) {
+            try {
+              final doc = await _firebaseService.firestore!
+                  .collection('users')
+                  .doc(user.uid)
+                  .get();
+              if (doc.exists && doc.data() != null) {
+                final d = doc.data()!;
+                if ((d['displayName'] as String?)?.isNotEmpty == true) {
+                  displayName = d['displayName'] as String;
+                }
+                if ((d['photoUrl'] as String?)?.isNotEmpty == true) {
+                  photoUrl = d['photoUrl'] as String;
+                }
+                if (d['dailyGoalMinutes'] != null) {
+                  dailyGoal = (d['dailyGoalMinutes'] as num).toInt();
+                }
               }
-              if ((d['photoUrl'] as String?)?.isNotEmpty == true) {
-                photoUrl = d['photoUrl'] as String;
-              }
-              if (d['dailyGoalMinutes'] != null) {
-                dailyGoal = (d['dailyGoalMinutes'] as num).toInt();
+            } catch (_) {}
+          }
+          if (displayName.isEmpty) {
+            displayName = cleanEmail.split('@').first;
+          }
+
+          final profile = UserProfileModel(
+            uid: user.uid,
+            email: user.email ?? cleanEmail,
+            displayName: displayName,
+            photoUrl: photoUrl,
+            dailyGoalMinutes: dailyGoal,
+            createdAt: user.metadata.creationTime ?? DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+
+          await _secureStorage.write(
+            key: _keySessionUser,
+            value: jsonEncode(profile.toMap()),
+          );
+
+          return profile;
+        } on FirebaseAuthException catch (e) {
+          // If network failure or offline, check if registered in local vault
+          if (e.code == 'network-request-failed') {
+            final localUsers = await _getStoredUsers();
+            if (localUsers.containsKey(cleanEmail)) {
+              final userData = localUsers[cleanEmail] as Map<String, dynamic>;
+              if (userData['password'] == password) {
+                final profile = UserProfileModel.fromMap(
+                  userData['profile'] as Map<String, dynamic>,
+                );
+                await _secureStorage.write(
+                  key: _keySessionUser,
+                  value: jsonEncode(profile.toMap()),
+                );
+                return profile;
               }
             }
-          } catch (_) {}
+          }
+          throw AuthException(_mapFirebaseError(e), code: e.code);
         }
-        if (displayName.isEmpty) {
-          displayName = email.split('@').first;
-        }
-
-        final profile = UserProfileModel(
-          uid: user.uid,
-          email: user.email ?? email.trim(),
-          displayName: displayName,
-          photoUrl: photoUrl,
-          dailyGoalMinutes: dailyGoal,
-          createdAt: user.metadata.creationTime ?? DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
-
-        await _secureStorage.write(
-          key: _keySessionUser,
-          value: jsonEncode(profile.toMap()),
-        );
-
-        return profile;
       } else {
         // Secure local login validation
         final users = await _getStoredUsers();
-        final cleanEmail = email.trim().toLowerCase();
-
         if (!users.containsKey(cleanEmail)) {
           throw const AuthException(
             'No registered account found with this email. Please sign up first.',
@@ -318,7 +327,9 @@ class AuthService {
 
         final userData = users[cleanEmail] as Map<String, dynamic>;
         if (userData['password'] != password) {
-          throw const AuthException('Invalid password. Please try again.');
+          throw const AuthException(
+            'Invalid password. Please check your credentials and try again.',
+          );
         }
 
         final profile = UserProfileModel.fromMap(
@@ -330,8 +341,6 @@ class AuthService {
         );
         return profile;
       }
-    } on FirebaseAuthException catch (e) {
-      throw AuthException(_mapFirebaseError(e), code: e.code);
     } catch (e) {
       if (e is AuthException) rethrow;
       throw AuthException('Failed to sign in: $e');
@@ -432,18 +441,24 @@ class AuthService {
       }
 
       final currentUser = await getCurrentUser();
-      if (currentUser != null) {
-        final updated = currentUser.copyWith(
-          displayName: displayName,
-          photoUrl: photoUrl,
-          dailyGoalMinutes: dailyGoalMinutes,
-          updatedAt: DateTime.now(),
-        );
-        await _secureStorage.write(
-          key: _keySessionUser,
-          value: jsonEncode(updated.toMap()),
-        );
-      }
+      final updated = (currentUser ??
+              UserProfileModel(
+                uid: 'local_student',
+                email: '',
+                displayName: displayName.isNotEmpty ? displayName : 'Student',
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+              ))
+          .copyWith(
+        displayName: displayName.isNotEmpty ? displayName : 'Student',
+        photoUrl: photoUrl,
+        dailyGoalMinutes: dailyGoalMinutes,
+        updatedAt: DateTime.now(),
+      );
+      await _secureStorage.write(
+        key: _keySessionUser,
+        value: jsonEncode(updated.toMap()),
+      );
     } catch (e) {
       throw AuthException('Failed to update profile: $e');
     }

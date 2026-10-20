@@ -98,67 +98,75 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         final maxImgHeight = (constraints.maxHeight * 0.46)
                             .clamp(180.0, 270.0);
 
-                        return Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // Mockup Illustration
-                            Container(
-                              height: maxImgHeight,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(
-                                      alpha: isDark ? 0.25 : 0.06,
-                                    ),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 8),
+                        return SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Mockup Illustration
+                                Container(
+                                  height: maxImgHeight,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: isDark ? 0.25 : 0.06,
+                                        ),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
-                                child: Image.asset(
-                                  item['image'] as String,
-                                  fit: BoxFit.contain,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: Image.asset(
+                                      item['image'] as String,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(height: AppDimensions.space32),
+                                const SizedBox(height: AppDimensions.space32),
 
-                            // Mockup Title (Heading 2: 24/32 Semibold / Bold)
-                            Text(
-                              item['title'] as String,
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.inter(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
-                                letterSpacing: -0.4,
-                              ),
-                            ),
-                            const SizedBox(height: AppDimensions.space12),
-
-                            // Mockup Description
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              child: Text(
-                                item['desc'] as String,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.inter(
-                                  fontSize: 14.5,
-                                  color: isDark
-                                      ? AppColors.textSecondaryDark
-                                      : AppColors.textSecondaryLight,
-                                  height: 1.45,
+                                // Mockup Title (Heading 2: 24/32 Semibold / Bold)
+                                Text(
+                                  item['title'] as String,
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w800,
+                                    color: isDark
+                                        ? AppColors.textPrimaryDark
+                                        : AppColors.textPrimaryLight,
+                                    letterSpacing: -0.4,
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: AppDimensions.space12),
+
+                                // Mockup Description
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  child: Text(
+                                    item['desc'] as String,
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14.5,
+                                      color: isDark
+                                          ? AppColors.textSecondaryDark
+                                          : AppColors.textSecondaryLight,
+                                      height: 1.45,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         );
                       },
                     );

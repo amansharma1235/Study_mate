@@ -5,7 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/routing/route_names.dart';
+import '../../data/local/notification_service.dart';
 import '../../data/local/preference_service.dart';
+import '../../data/models/user_profile_model.dart';
+import '../../data/remote/auth_service.dart';
 import '../auth/auth_controller.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -54,12 +57,24 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       }
       if (!mounted) return;
       final onboardingDone = prefs.isOnboardingDone();
-      final user = ref.read(currentProfileProvider);
+      NotificationService.instance.scheduleDailyMorningBriefing();
+      UserProfileModel? user = ref.read(currentProfileProvider);
+      if (user == null) {
+        user = await ref.read(authServiceProvider).getCurrentUser();
+        if (!mounted) return;
+        if (user != null) {
+          ref.read(currentProfileProvider.notifier).state = user;
+        }
+      }
 
       if (!onboardingDone) {
         context.go(AppRoutes.onboarding);
       } else if (user != null) {
-        context.go(AppRoutes.home);
+        if (prefs.isAppLockEnabled() && prefs.getAppLockPin().isNotEmpty) {
+          context.go(AppRoutes.securityLock, extra: true);
+        } else {
+          context.go(AppRoutes.home);
+        }
       } else {
         context.go(AppRoutes.login);
       }
@@ -177,7 +192,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                               style: GoogleFonts.inter(
                                 fontSize: 36,
                                 fontWeight: FontWeight.w900,
-                                color: const Color(0xFFFFD166),
+                                color: AppColors.secondary,
                                 letterSpacing: -0.6,
                               ),
                             ),

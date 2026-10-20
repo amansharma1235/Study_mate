@@ -82,6 +82,18 @@ class QuizSessionController extends StateNotifier<QuizSessionState> {
     );
   }
 
+  void startCustomQuiz(String category, List<QuizQuestion> questions) {
+    state = QuizSessionState(
+      category: category,
+      questions: questions,
+      currentIndex: 0,
+      selectedAnswers: {},
+      isSubmitted: false,
+      correctCount: 0,
+      scorePercentage: 0.0,
+    );
+  }
+
   void selectOption(int optionIndex) {
     if (state.isSubmitted) return;
 

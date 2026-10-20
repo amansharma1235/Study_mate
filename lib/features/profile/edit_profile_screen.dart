@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
@@ -44,6 +45,31 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _nameController.dispose();
     _goalController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 600,
+        maxHeight: 600,
+        imageQuality: 85,
+      );
+      if (image != null) {
+        setState(() {
+          _selectedAvatar = image.path;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        AppDialogs.showSnackBar(
+          context,
+          message: 'Unable to select image from gallery: $e',
+          isError: true,
+        );
+      }
+    }
   }
 
   Future<void> _handleSave() async {
@@ -115,25 +141,45 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       name: currentName,
                       size: 92,
                       showEditBadge: true,
+                      onTap: _pickImageFromGallery,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: _pickImageFromGallery,
+                      icon: const Icon(Icons.photo_library_rounded, size: 18),
+                      label: const Text(
+                        'Choose from Gallery',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     Text(
-                      'Choose Your Student Avatar',
+                      'Or choose a preset student avatar',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: isDark
                             ? AppColors.textSecondaryDark
                             : AppColors.textSecondaryLight,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
 
                     // Avatar Chips Selection
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
+                          _buildAvatarChip(
+                            label: 'Gallery',
+                            emoji: '🖼️',
+                            isSelected: _selectedAvatar != null &&
+                                !UserAvatar.avatarPresets
+                                    .containsKey(_selectedAvatar) &&
+                                _selectedAvatar!.isNotEmpty,
+                            onTap: _pickImageFromGallery,
+                            isDark: isDark,
+                          ),
                           // Initial / Reset chip
                           _buildAvatarChip(
                             label: 'Initials',

@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/routing/route_names.dart';
 import '../../core/utils/date_formatter.dart';
+import '../../data/local/ambient_sound_service.dart';
 import '../../data/models/pomodoro_session_model.dart';
 import 'pomodoro_controller.dart';
 
@@ -32,7 +33,67 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       ref.read(pomodoroControllerProvider.notifier).checkAppResumed();
+      _checkWitheredAlert();
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      ref.read(pomodoroControllerProvider.notifier).checkAppPaused();
     }
+  }
+
+  void _checkWitheredAlert() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final timerState = ref.read(pomodoroControllerProvider);
+      if (timerState.hasWitheredAlert) {
+        ref.read(pomodoroControllerProvider.notifier).clearWitheredAlert();
+        _showWitheredTreeDialog();
+      }
+    });
+  }
+
+  void _showWitheredTreeDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Text('🥀 ', style: TextStyle(fontSize: 26)),
+            Expanded(
+              child: Text(
+                'Focus Broken! Tree Withered',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+              ),
+            ),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'You exited StudyMate while Strict Anti-Distraction Mode was active.\n\nYour seedling withered into dry branches in your Forest Sanctuary.',
+              style: TextStyle(fontSize: 14, height: 1.4),
+            ),
+            SizedBox(height: 12),
+            Text(
+              '💡 Tip: Keep StudyMate open and resist social media temptations during deep study!',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('I will stay focused! 💪'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -71,6 +132,11 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.park_rounded, color: AppColors.success),
+            tooltip: 'Virtual Study Garden',
+            onPressed: () => context.push(AppRoutes.studyGarden),
+          ),
           IconButton(
             icon: const Icon(Icons.history_rounded),
             tooltip: 'History',
@@ -181,7 +247,39 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
                   ],
                 ),
               ),
-              const SizedBox(height: AppDimensions.space32),
+              const SizedBox(height: AppDimensions.space12),
+
+              // Virtual Forest Focus Banner
+              InkWell(
+                onTap: () => context.push(AppRoutes.studyGarden),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.success.withValues(alpha: 0.2)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Text('🌱', style: TextStyle(fontSize: 16)),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Growing your virtual tree • +10 Coins 🪙 on completion',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.success,
+                          ),
+                        ),
+                      ),
+                      Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.success),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppDimensions.space24),
 
               // Circular Animated Progress Countdown
               Center(
@@ -220,12 +318,29 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
                       Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          if (timerState.mode == PomodoroMode.focus) ...[
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              child: Text(
+                                timerState.progress < 0.25
+                                    ? '🌱'
+                                    : (timerState.progress < 0.6
+                                        ? '🌿'
+                                        : (timerState.progress < 0.9
+                                            ? '🪴'
+                                            : '🌳')),
+                                key: ValueKey((timerState.progress * 4).floor()),
+                                style: const TextStyle(fontSize: 24),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                          ],
                           Text(
                             DateFormatter.formatDuration(
                               timerState.remainingSeconds,
                             ),
                             style: TextStyle(
-                              fontSize: 52,
+                              fontSize: 50,
                               fontWeight: FontWeight.w800,
                               color: isDark
                                   ? AppColors.textPrimaryDark
@@ -246,9 +361,9 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
                               ),
                             ),
                             child: Text(
-                              timerState.mode.displayName,
+                              '${timerState.mode.displayName} • ${(timerState.progress * 100).toInt()}%',
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 color: modeColor,
                               ),
@@ -370,6 +485,275 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
                     onPressed: () => controller.skip(),
                   ),
                 ],
+              ),
+              const SizedBox(height: AppDimensions.space24),
+
+              // Strict Deep Focus (Anti-Distraction Mode) Card
+              Container(
+                margin: const EdgeInsets.only(bottom: AppDimensions.space16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: timerState.isStrictMode
+                      ? AppColors.error.withValues(alpha: isDark ? 0.15 : 0.08)
+                      : (isDark ? AppColors.surfaceDark : Colors.white),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: timerState.isStrictMode
+                        ? AppColors.error.withValues(alpha: 0.5)
+                        : (isDark ? AppColors.borderDark : AppColors.borderLight),
+                    width: timerState.isStrictMode ? 1.5 : 1.0,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: timerState.isStrictMode
+                            ? AppColors.error.withValues(alpha: 0.2)
+                            : AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        timerState.isStrictMode
+                            ? Icons.shield_rounded
+                            : Icons.shield_outlined,
+                        color: timerState.isStrictMode
+                            ? AppColors.error
+                            : AppColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                'Strict Anti-Distraction',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: timerState.isStrictMode
+                                      ? AppColors.error
+                                      : Colors.grey.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  timerState.isStrictMode ? 'STRICT' : 'OFF',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: timerState.isStrictMode
+                                        ? Colors.white
+                                        : (isDark ? Colors.white70 : Colors.black87),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            timerState.isStrictMode
+                                ? 'Leaving the app will wither your tree 🥀'
+                                : 'Protect your focus sessions from app switching',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: timerState.isStrictMode,
+                      activeThumbColor: AppColors.error,
+                      onChanged: (val) {
+                        controller.toggleStrictMode(val);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              // Ambient Focus Soundscapes Card (Phase 2 Feature)
+              Builder(
+                builder: (context) {
+                  final ambientState = ref.watch(ambientSoundServiceProvider);
+                  final ambientNotifier = ref.read(ambientSoundServiceProvider.notifier);
+
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.surfaceDark : Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? AppColors.borderDark : AppColors.borderLight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppColors.secondary.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.headphones_rounded,
+                                color: AppColors.secondary,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Ambient Focus Soundscape',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Text(
+                                    ambientState.currentSound == AmbientSoundType.none
+                                        ? 'Select background noise to enhance concentration'
+                                        : (ambientState.isPlaying
+                                            ? 'Playing • Enhances focus & calm'
+                                            : 'Paused'),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: ambientState.isPlaying
+                                          ? AppColors.success
+                                          : (isDark
+                                              ? AppColors.textSecondaryDark
+                                              : AppColors.textSecondaryLight),
+                                      fontWeight: ambientState.isPlaying
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (ambientState.currentSound != AmbientSoundType.none)
+                              IconButton(
+                                icon: Icon(
+                                  ambientState.isPlaying
+                                      ? Icons.pause_circle_filled_rounded
+                                      : Icons.play_circle_fill_rounded,
+                                ),
+                                color: AppColors.secondary,
+                                iconSize: 32,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () => ambientNotifier.togglePlayPause(),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          child: Row(
+                            children: kAmbientTracks.map((track) {
+                              final isSelected =
+                                  ambientState.currentSound == track.type;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ChoiceChip(
+                                  avatar: Text(
+                                    track.iconEmoji,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  label: Text(track.title),
+                                  selected: isSelected,
+                                  selectedColor: AppColors.secondary.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  labelStyle: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    color: isSelected
+                                        ? AppColors.secondary
+                                        : (isDark
+                                            ? AppColors.textPrimaryDark
+                                            : AppColors.textPrimaryLight),
+                                  ),
+                                  onSelected: (_) {
+                                    ambientNotifier.selectSound(track.type);
+                                  },
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        if (ambientState.currentSound != AmbientSoundType.none) ...[
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.volume_mute_rounded,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
+                              Expanded(
+                                child: SliderTheme(
+                                  data: SliderTheme.of(context).copyWith(
+                                    trackHeight: 3,
+                                    thumbShape: const RoundSliderThumbShape(
+                                      enabledThumbRadius: 6,
+                                    ),
+                                  ),
+                                  child: Slider(
+                                    value: ambientState.volume,
+                                    min: 0.0,
+                                    max: 1.0,
+                                    activeColor: AppColors.secondary,
+                                    onChanged: (v) =>
+                                        ambientNotifier.setVolume(v),
+                                  ),
+                                ),
+                              ),
+                              const Icon(
+                                Icons.volume_up_rounded,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
               ),
             ],
           ),

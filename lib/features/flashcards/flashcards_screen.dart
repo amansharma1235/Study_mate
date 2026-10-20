@@ -108,95 +108,269 @@ class FlashcardsScreen extends ConsumerWidget {
 
           return ListView.builder(
             padding: const EdgeInsets.all(AppDimensions.space16),
-            itemCount: decks.length,
+            itemCount: decks.length + 1,
             itemBuilder: (context, idx) {
-              final deck = decks[idx];
-              final deckColor = _parseColor(deck.colorHex);
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 14),
-                child: AppCard(
+              if (idx == 0) {
+                // Leitner Spaced Repetition Mastery Hero Card
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 20),
                   padding: const EdgeInsets.all(16),
-                  onTap: () {
-                    context.push(AppRoutes.flashcardsReview, extra: deck);
-                  },
-                  child: Row(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: isDark
+                          ? [const Color(0xFF1E1B4B), const Color(0xFF172554)]
+                          : [const Color(0xFFEEF2FF), const Color(0xFFEFF6FF)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Subject Icon Box
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: deckColor.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.style_rounded,
-                          color: deckColor,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-
-                      // Info
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              deck.title,
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
-                              ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${deck.subject} • ${deck.description}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: isDark
-                                    ? AppColors.textSecondaryDark
-                                    : AppColors.textSecondaryLight,
-                              ),
+                            child: const Text('🧠', style: TextStyle(fontSize: 20)),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Leitner Box Retention Engine',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 15,
+                                    color: isDark ? Colors.white : const Color(0xFF1E1B4B),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Spaced Repetition prevents memory decay over time',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-
-                      // Review Button
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: deckColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                        label: const Text(
-                          'Review',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        onPressed: () {
-                          context.push(AppRoutes.flashcardsReview, extra: deck);
-                        },
+                      const SizedBox(height: 14),
+                      // 4 Leitner Box Legend Pills
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          _buildLeitnerPill('Box 1: Learning (1d)', const Color(0xFFEF4444)),
+                          _buildLeitnerPill('Box 2: Review (3d)', const Color(0xFFF59E0B)),
+                          _buildLeitnerPill('Box 3: Strong (7d)', const Color(0xFF3B82F6)),
+                          _buildLeitnerPill('Box 4: Mastered (14d+)', const Color(0xFF10B981)),
+                        ],
                       ),
                     ],
                   ),
-                ),
+                );
+              }
+
+              final deck = decks[idx - 1];
+              final deckColor = _parseColor(deck.colorHex);
+
+              return Consumer(
+                builder: (context, ref, child) {
+                  final masteryAsync = ref.watch(deckMasteryProvider(deck.id));
+                  final mastery = masteryAsync.valueOrNull ??
+                      const LeitnerDeckMastery(
+                        box1Learning: 0,
+                        box2Review: 0,
+                        box3Consolidating: 0,
+                        box4Mastered: 0,
+                        totalCards: 0,
+                        dueToday: 0,
+                        retentionPercentage: 0,
+                      );
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    child: AppCard(
+                      padding: const EdgeInsets.all(16),
+                      onTap: () {
+                        context.push(AppRoutes.flashcardsReview, extra: deck);
+                      },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              // Subject Icon Box
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: deckColor.withValues(alpha: 0.14),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  Icons.style_rounded,
+                                  color: deckColor,
+                                  size: 26,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+
+                              // Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      deck.title,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: isDark
+                                            ? AppColors.textPrimaryDark
+                                            : AppColors.textPrimaryLight,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${deck.subject} • ${deck.description}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isDark
+                                            ? AppColors.textSecondaryDark
+                                            : AppColors.textSecondaryLight,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Review Button
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: deckColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 7,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.play_arrow_rounded, size: 16),
+                                label: const Text(
+                                  'Review',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  context.push(AppRoutes.flashcardsReview, extra: deck);
+                                },
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 12),
+                          const Divider(height: 1),
+                          const SizedBox(height: 10),
+
+                          // Leitner Retention Bar & Due Stats
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: mastery.retentionPercentage >= 70
+                                          ? AppColors.success.withValues(alpha: 0.15)
+                                          : AppColors.primary.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      '🧠 ${mastery.retentionPercentage}% Retained',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: mastery.retentionPercentage >= 70
+                                            ? AppColors.success
+                                            : AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                  if (mastery.box4Mastered > 0) ...[
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '• ${mastery.box4Mastered} Mastered',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF10B981),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              if (mastery.dueToday > 0)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '🔔 ${mastery.dueToday} Due Today',
+                                    style: const TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.error,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          // 4-box Segmented Progress Bar
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: SizedBox(
+                              height: 6,
+                              child: Row(
+                                children: [
+                                  _buildBoxSegment(mastery.box1Learning, mastery.totalCards, const Color(0xFFEF4444)),
+                                  _buildBoxSegment(mastery.box2Review, mastery.totalCards, const Color(0xFFF59E0B)),
+                                  _buildBoxSegment(mastery.box3Consolidating, mastery.totalCards, const Color(0xFF3B82F6)),
+                                  _buildBoxSegment(mastery.box4Mastered, mastery.totalCards, const Color(0xFF10B981)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               );
             },
           );
@@ -213,6 +387,48 @@ class FlashcardsScreen extends ConsumerWidget {
           ),
         ),
         onPressed: () => _showCreateDeckDialog(context, ref),
+      ),
+    );
+  }
+
+  Widget _buildLeitnerPill(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBoxSegment(int count, int total, Color color) {
+    final flex = total > 0 && count > 0 ? count : 0;
+    if (flex == 0) return const SizedBox.shrink();
+    return Expanded(
+      flex: flex,
+      child: Container(
+        color: color,
+        margin: const EdgeInsets.symmetric(horizontal: 0.5),
       ),
     );
   }

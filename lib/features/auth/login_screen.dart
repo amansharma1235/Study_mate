@@ -50,21 +50,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  Future<void> _handleGoogleSignIn() async {
-    // Graceful demo/fallback login
-    setState(() => _isLoading = true);
-    try {
-      await ref
-          .read(authControllerProvider.notifier)
-          .login('student@studymate.app', 'student123');
-      if (!mounted) return;
-      context.go(AppRoutes.home);
-    } catch (e) {
-      if (!mounted) return;
-      AppDialogs.showSnackBar(context, message: e.toString(), isError: true);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+  void _handleGoogleSignIn() {
+    AppDialogs.showSnackBar(
+      context,
+      message:
+          'Google Sign-In will be enabled in the next update. Please sign in with your email and password.',
+    );
   }
 
   @override
@@ -292,73 +283,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppDimensions.space20),
-
-                  // Quick Switch User Chips
-                  Center(
-                    child: Text(
-                      'OR SWITCH TEST USER',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.0,
-                        color: isDark
-                            ? AppColors.textMutedDark
-                            : AppColors.textMutedLight,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      ActionChip(
-                        avatar: const CircleAvatar(
-                          backgroundColor: AppColors.primary,
-                          child: Text(
-                            'A',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        label: const Text('Login as Aman'),
-                        onPressed: _isLoading
-                            ? null
-                            : () async {
-                                _emailController.text = 'aman@studymate.app';
-                                _passwordController.text = '123';
-                                await _handleLogin();
-                              },
-                      ),
-                      ActionChip(
-                        avatar: const CircleAvatar(
-                          backgroundColor: AppColors.secondary,
-                          child: Text(
-                            'R',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        label: const Text('Login as Rahul'),
-                        onPressed: _isLoading
-                            ? null
-                            : () async {
-                                _emailController.text = 'rahul@studymate.app';
-                                _passwordController.text = '123';
-                                await _handleLogin();
-                              },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppDimensions.space20),
+                  const SizedBox(height: AppDimensions.space24),
 
                   // Register link
                   Row(

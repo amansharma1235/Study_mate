@@ -206,23 +206,49 @@ class _NotificationSettingsScreenState
             ),
             const SizedBox(height: AppDimensions.space24),
 
-            // Test Notification Button
+            // Test Immediate Notification Button
             AppButton(
-              text: 'Send Test Notification',
+              text: 'Send Test Notification (Immediate)',
               variant: AppButtonVariant.outline,
-              icon: Icons.send_rounded,
+              icon: Icons.notifications_active_rounded,
               onPressed: () async {
                 await ref
                     .read(notificationServiceProvider)
                     .showNotification(
                       id: 1111,
-                      title: 'StudyMate Notification Test',
-                      body: 'Your local notifications are correctly configured and active!',
+                      title: 'StudyMate Foreground Alert 🔔',
+                      body: 'Your StudyMate notifications are working actively in foreground!',
                     );
                 if (context.mounted) {
                   AppDialogs.showSnackBar(
                     context,
-                    message: 'Test notification triggered!',
+                    message: 'Foreground notification displayed!',
+                    isSuccess: true,
+                  );
+                }
+              },
+            ),
+            const SizedBox(height: 12),
+
+            // Schedule Background Test (5s) Button
+            AppButton(
+              text: 'Test Background Notification (5s)',
+              variant: AppButtonVariant.primary,
+              icon: Icons.timer_outlined,
+              onPressed: () async {
+                final scheduledTime = DateTime.now().add(const Duration(seconds: 5));
+                await ref
+                    .read(notificationServiceProvider)
+                    .scheduleNotification(
+                      id: 2222,
+                      title: 'Background Study Alert! ⏰',
+                      body: 'This notification fired while app is in background or screen is locked!',
+                      scheduledDate: scheduledTime,
+                    );
+                if (context.mounted) {
+                  AppDialogs.showSnackBar(
+                    context,
+                    message: 'Scheduled in 5s! Minimize or lock screen to test background alert.',
                     isSuccess: true,
                   );
                 }

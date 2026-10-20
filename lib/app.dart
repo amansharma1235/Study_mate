@@ -13,12 +13,13 @@ class StudyMateApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final accent = ref.watch(accentThemeProvider);
 
     return MaterialApp.router(
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      theme: AppTheme.buildTheme(isDark: false, accent: accent),
+      darkTheme: AppTheme.buildTheme(isDark: true, accent: accent),
       themeMode: themeMode,
       routerConfig: router,
     );

@@ -12,9 +12,13 @@ import '../../core/widgets/app_card.dart';
 import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/user_avatar.dart';
 import '../../data/remote/sync_service.dart';
+import '../../core/widgets/speed_dial_fab.dart';
 import '../auth/auth_controller.dart';
+import '../exams/widgets/upcoming_exam_countdown_card.dart';
+import '../gamification/widgets/scholar_xp_card.dart';
 import '../notes/notes_controller.dart';
 import 'home_controller.dart';
+import 'widgets/today_visual_timeline_card.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -67,7 +71,7 @@ class HomeScreen extends ConsumerWidget {
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.w900,
                         fontSize: 20,
-                        color: isDark ? Colors.white : const Color(0xFF1E2134),
+                        color: isDark ? Colors.white : AppColors.primary,
                         letterSpacing: -0.4,
                       ),
                     ),
@@ -76,7 +80,7 @@ class HomeScreen extends ConsumerWidget {
                       style: GoogleFonts.inter(
                         fontWeight: FontWeight.w900,
                         fontSize: 20,
-                        color: AppColors.primary,
+                        color: AppColors.secondary,
                         letterSpacing: -0.4,
                       ),
                     ),
@@ -150,14 +154,25 @@ class HomeScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top Greeting & Streak Hero Card (Unique Midnight Sapphire & Royal Azure)
+                // Top Greeting & Streak Hero Card (Rich Midnight Indigo & Royal Purple Gradient)
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(22),
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF0F172A), // Deep Midnight Slate
+                        Color(0xFF1E1B4B), // Rich Indigo 950
+                        Color(0xFF312E81), // Vibrant Indigo 900
+                        Color(0xFF4338CA), // Electric Purple Azure
+                      ],
+                      stops: [0.0, 0.35, 0.70, 1.0],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.28),
-                        blurRadius: 20,
+                        color: const Color(0xFF4338CA).withValues(alpha: 0.38),
+                        blurRadius: 24,
                         offset: const Offset(0, 8),
                       ),
                     ],
@@ -166,14 +181,15 @@ class HomeScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(22),
                     child: Stack(
                       children: [
-                        // Layer 1: Luxury Midnight to Royal Gradient Surface
-                        Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            gradient: AppColors.heroCardGradient,
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.14),
-                              width: 1.2,
+                        // Layer 1: Ambient Border Overlay
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                width: 1.2,
+                              ),
+                              borderRadius: BorderRadius.circular(22),
                             ),
                           ),
                         ),
@@ -475,7 +491,11 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: AppDimensions.space20),
+                const SizedBox(height: 14),
+
+                // Scholar XP & Level Progression Card
+                const ScholarXpCard(),
+                const SizedBox(height: 16),
 
                 // Key Daily Progress Row (Study Goal & Tasks)
                 Row(
@@ -660,6 +680,128 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppDimensions.space20),
 
+                // Nearest Target Exam Countdown Radar
+                UpcomingExamCountdownCard(
+                  upcomingExams: data.upcomingExams,
+                ),
+                const SizedBox(height: AppDimensions.space20),
+
+                // Visual Day Timeline & Smart Time-blocking
+                TodayVisualTimelineCard(
+                  todayClasses: data.todayClasses,
+                  todayTasks: data.todayTaskList,
+                ),
+                const SizedBox(height: AppDimensions.space20),
+
+                // AI Exam Simulator Banner Card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: isDark
+                          ? [const Color(0xFF1E1B4B), const Color(0xFF311042)]
+                          : [const Color(0xFF4F46E5), const Color(0xFF7C3AED)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.25),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.psychology_rounded,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 6,
+                              runSpacing: 2,
+                              children: [
+                                Text(
+                                  'AI Exam Simulator',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 16.0,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    'NEW',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Timed mock tests with negative marking & AI weakness radar.',
+                              style: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                color: Colors.white.withValues(alpha: 0.85),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: AppColors.primary,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () =>
+                            context.push(AppRoutes.examSimulatorConfig),
+                        child: Text(
+                          'Test 🚀',
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.space20),
+
                 // Quick Action Shortcuts Grid
                 Text(
                   'Quick Tools',
@@ -678,13 +820,20 @@ class HomeScreen extends ConsumerWidget {
                   physics: const NeverScrollableScrollPhysics(),
                   mainAxisSpacing: 10,
                   crossAxisSpacing: 10,
-                  childAspectRatio: 0.88,
+                  childAspectRatio: 0.95,
                   children: [
+                    _buildQuickToolItem(
+                      context,
+                      icon: Icons.auto_awesome_rounded,
+                      label: 'AI Tutor',
+                      color: AppColors.primary,
+                      onTap: () => context.push(AppRoutes.aiAssistant),
+                    ),
                     _buildQuickToolItem(
                       context,
                       icon: Icons.description_outlined,
                       label: 'Notes',
-                      color: AppColors.primary,
+                      color: const Color(0xFF3987F5),
                       onTap: () => context.push(AppRoutes.notes),
                     ),
                     _buildQuickToolItem(
@@ -710,6 +859,13 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     _buildQuickToolItem(
                       context,
+                      icon: Icons.style_outlined,
+                      label: 'Flashcards',
+                      color: const Color(0xFF0D9488),
+                      onTap: () => context.push(AppRoutes.flashcards),
+                    ),
+                    _buildQuickToolItem(
+                      context,
                       icon: Icons.alarm_rounded,
                       label: 'Exams',
                       color: const Color(0xFFF97316),
@@ -721,20 +877,6 @@ class HomeScreen extends ConsumerWidget {
                       label: 'Quiz',
                       color: AppColors.secondary,
                       onTap: () => context.push(AppRoutes.quizCategories),
-                    ),
-                    _buildQuickToolItem(
-                      context,
-                      icon: Icons.calculate_outlined,
-                      label: 'Calculator',
-                      color: const Color(0xFF06B6D4),
-                      onTap: () => context.push(AppRoutes.percentageCalculator),
-                    ),
-                    _buildQuickToolItem(
-                      context,
-                      icon: Icons.lightbulb_outline_rounded,
-                      label: 'Tips',
-                      color: AppColors.warning,
-                      onTap: () => context.push(AppRoutes.studyTips),
                     ),
                   ],
                 ),
@@ -748,16 +890,21 @@ class HomeScreen extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Weekly Study Focus (Minutes)',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: isDark
-                                  ? AppColors.textPrimaryDark
-                                  : AppColors.textPrimaryLight,
+                          Expanded(
+                            child: Text(
+                              'Weekly Study Focus (Minutes)',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? AppColors.textPrimaryDark
+                                    : AppColors.textPrimaryLight,
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           GestureDetector(
                             onTap: () =>
                                 context.push(AppRoutes.studyStatistics),
@@ -863,89 +1010,27 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppDimensions.space20),
 
-                // Upcoming Class Indicator
-                if (data.nextClass != null) ...[
-                  Text(
-                    'Next Upcoming Class',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.space10),
-                  AppCard(
-                    onTap: () => context.push(AppRoutes.timetable),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.radiusMedium,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.class_rounded,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        const SizedBox(width: AppDimensions.space12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                data.nextClass!.subject,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 15,
-                                  color: isDark
-                                      ? AppColors.textPrimaryDark
-                                      : AppColors.textPrimaryLight,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${data.nextClass!.startTime} - ${data.nextClass!.endTime} • Room ${data.nextClass!.room.isNotEmpty ? data.nextClass!.room : "TBA"}',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: isDark
-                                      ? AppColors.textSecondaryDark
-                                      : AppColors.textSecondaryLight,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 14,
-                          color: AppColors.primary,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.space20),
-                ],
+
 
                 // Upcoming Exams Section
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Exam Countdowns',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight,
+                    Expanded(
+                      child: Text(
+                        'Exam Countdowns',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimaryLight,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     GestureDetector(
                       onTap: () => context.push(AppRoutes.exams),
                       child: const Text(
@@ -1047,16 +1132,21 @@ class HomeScreen extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Recent Notes',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight,
+                    Expanded(
+                      child: Text(
+                        'Recent Notes',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimaryLight,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     GestureDetector(
                       onTap: () => context.go(AppRoutes.notes),
                       child: const Text(
@@ -1155,6 +1245,7 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
       ),
+      floatingActionButton: const SpeedDialFab(),
     );
   }
 

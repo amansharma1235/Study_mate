@@ -29,6 +29,7 @@ class PreferenceService {
   static const String _keySoundEnabled = 'sound_enabled';
   static const String _keyVibrationEnabled = 'vibration_enabled';
   static const String _keyNotificationsEnabled = 'notifications_enabled';
+  static const String _keyAccentTheme = 'accent_theme';
 
   // Theme
   ThemeMode getThemeMode() {
@@ -48,6 +49,14 @@ class PreferenceService {
     if (mode == ThemeMode.light) val = 'light';
     if (mode == ThemeMode.dark) val = 'dark';
     await _prefs.setString(_keyThemeMode, val);
+  }
+
+  String getAccentTheme() {
+    return _prefs.getString(_keyAccentTheme) ?? 'studyMate';
+  }
+
+  Future<void> setAccentTheme(String accentKey) async {
+    await _prefs.setString(_keyAccentTheme, accentKey);
   }
 
   // Onboarding
@@ -97,4 +106,83 @@ class PreferenceService {
       _prefs.getBool(_keyNotificationsEnabled) ?? true;
   Future<void> setNotificationsEnabled(bool enabled) =>
       _prefs.setBool(_keyNotificationsEnabled, enabled);
+
+  // Gemini API Key
+  static const String _keyGeminiApiKey = 'user_gemini_api_key';
+  String getGeminiApiKey() => _prefs.getString(_keyGeminiApiKey) ?? '';
+  Future<void> setGeminiApiKey(String key) =>
+      _prefs.setString(_keyGeminiApiKey, key.trim());
+
+  // Gamification & XP
+  static const String _keyUserXp = 'gamification_user_xp';
+  static const String _keyTasksCompletedXp = 'gamification_tasks_completed_count';
+  static const String _keyPomodoroCompletedXp = 'gamification_pomodoro_completed_count';
+  static const String _keyStudyCoins = 'gamification_study_coins';
+  static const String _keyUnlockedTrees = 'gamification_unlocked_trees';
+  static const String _keySelectedTree = 'gamification_selected_tree';
+  static const String _keyPlantedTrees = 'gamification_planted_trees_v1';
+
+  int getUserXp() => _prefs.getInt(_keyUserXp) ?? 50; // Starter scholarship 50 XP
+  Future<void> setUserXp(int xp) => _prefs.setInt(_keyUserXp, xp);
+
+  int getCompletedTasksCount() => _prefs.getInt(_keyTasksCompletedXp) ?? 0;
+  Future<void> incrementCompletedTasksCount() =>
+      _prefs.setInt(_keyTasksCompletedXp, getCompletedTasksCount() + 1);
+
+  int getCompletedPomodoroCount() => _prefs.getInt(_keyPomodoroCompletedXp) ?? 0;
+  Future<void> incrementCompletedPomodoroCount() =>
+      _prefs.setInt(_keyPomodoroCompletedXp, getCompletedPomodoroCount() + 1);
+
+  // Study Coins
+  int getStudyCoins() => _prefs.getInt(_keyStudyCoins) ?? 50; // 50 coins starter bonus
+  Future<void> setStudyCoins(int coins) => _prefs.setInt(_keyStudyCoins, coins);
+  Future<void> addStudyCoins(int amount) => setStudyCoins(getStudyCoins() + amount);
+
+  // Virtual Garden Trees
+  List<String> getUnlockedTreeIds() {
+    return _prefs.getStringList(_keyUnlockedTrees) ?? ['bonsai_sprout'];
+  }
+
+  Future<void> unlockTreeId(String treeId) async {
+    final current = getUnlockedTreeIds().toSet();
+    current.add(treeId);
+    await _prefs.setStringList(_keyUnlockedTrees, current.toList());
+  }
+
+  String getSelectedTreeId() => _prefs.getString(_keySelectedTree) ?? 'bonsai_sprout';
+  Future<void> setSelectedTreeId(String treeId) =>
+      _prefs.setString(_keySelectedTree, treeId);
+
+  List<String> getPlantedTreesJsonList() =>
+      _prefs.getStringList(_keyPlantedTrees) ?? [];
+
+  Future<void> addPlantedTreeRecord(String treeRecordJson) async {
+    final list = List<String>.from(getPlantedTreesJsonList());
+    list.add(treeRecordJson);
+    await _prefs.setStringList(_keyPlantedTrees, list);
+  }
+
+  // App Lock & Privacy
+  static const String _keyAppLockEnabled = 'security_app_lock_enabled';
+  static const String _keyAppLockPin = 'security_app_lock_pin';
+  static const String _keyBiometricsEnabled = 'security_biometrics_enabled';
+
+  bool isAppLockEnabled() => _prefs.getBool(_keyAppLockEnabled) ?? false;
+  Future<void> setAppLockEnabled(bool enabled) =>
+      _prefs.setBool(_keyAppLockEnabled, enabled);
+
+  String getAppLockPin() => _prefs.getString(_keyAppLockPin) ?? '';
+  Future<void> setAppLockPin(String pin) =>
+      _prefs.setString(_keyAppLockPin, pin);
+
+  bool isBiometricsEnabled() => _prefs.getBool(_keyBiometricsEnabled) ?? false;
+  Future<void> setBiometricsEnabled(bool enabled) =>
+      _prefs.setBool(_keyBiometricsEnabled, enabled);
+
+  // Strict Focus Mode (Anti-distraction Forest style)
+  static const String _keyStrictMode = 'timer_strict_focus_mode';
+  bool isStrictMode() => _prefs.getBool(_keyStrictMode) ?? false;
+  Future<void> setStrictMode(bool enabled) =>
+      _prefs.setBool(_keyStrictMode, enabled);
 }
+

@@ -34,6 +34,7 @@ import '../../features/settings/delete_account_screen.dart';
 import '../../features/settings/help_support_screen.dart';
 import '../../features/settings/more_tools_screen.dart';
 import '../../features/settings/notification_settings_screen.dart';
+import '../../features/settings/security_lock_screen.dart';
 import '../../features/settings/privacy_policy_screen.dart';
 import '../../features/settings/terms_conditions_screen.dart';
 import '../../features/statistics/study_statistics_screen.dart';
@@ -54,11 +55,20 @@ import '../../features/syllabus/syllabus_screen.dart';
 import '../../features/calculator/cgpa_calculator_screen.dart';
 import '../../features/ai_assistant/ai_assistant_screen.dart';
 import '../../features/documents/documents_screen.dart';
+import '../../features/documents/doc_extractor_screen.dart';
+import '../../features/documents/pdf_cheatsheet_screen.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../features/voice_notes/voice_notes_screen.dart';
 import '../../features/habits/habits_screen.dart';
 import '../../features/coding/coding_screen.dart';
 import '../../features/career/career_screen.dart';
 import '../../features/groups/study_groups_screen.dart';
+import '../../features/garden/study_garden_screen.dart';
+import '../../features/gamification/leaderboard_screen.dart';
+import '../../data/models/exam_simulator_model.dart';
+import '../../features/exams/simulator/exam_simulator_config_screen.dart';
+import '../../features/exams/simulator/exam_simulator_screen.dart';
+import '../../features/exams/simulator/exam_simulator_result_screen.dart';
 import 'route_names.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -125,7 +135,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // Notes Subroutes
       GoRoute(
         path: AppRoutes.createNote,
-        builder: (context, state) => const NoteCreateEditScreen(),
+        builder: (context, state) {
+          if (state.extra is Map<String, dynamic>) {
+            final extra = state.extra as Map<String, dynamic>;
+            return NoteCreateEditScreen(
+              initialTitle: extra['initialTitle'] as String?,
+              initialContent: extra['initialContent'] as String?,
+            );
+          }
+          return const NoteCreateEditScreen();
+        },
       ),
       GoRoute(
         path: AppRoutes.editNote,
@@ -202,6 +221,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return ExamCreateEditScreen(examToEdit: exam);
         },
       ),
+      GoRoute(
+        path: AppRoutes.examSimulatorConfig,
+        builder: (context, state) => const ExamSimulatorConfigScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.examSimulatorPlay,
+        builder: (context, state) => const ExamSimulatorScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.examSimulatorResult,
+        builder: (context, state) {
+          final result = state.extra as ExamSimResult;
+          return ExamSimulatorResultScreen(result: result);
+        },
+      ),
 
       // Quiz Subroutes
       GoRoute(
@@ -265,6 +299,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AppearanceSettingsScreen(),
       ),
       GoRoute(
+        path: AppRoutes.securityLock,
+        builder: (context, state) {
+          final isStartup = state.extra as bool? ?? false;
+          return SecurityLockScreen(isStartupUnlock: isStartup);
+        },
+      ),
+      GoRoute(
         path: AppRoutes.privacyPolicy,
         builder: (context, state) => const PrivacyPolicyScreen(),
       ),
@@ -323,13 +364,54 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // AI Assistant
       GoRoute(
         path: AppRoutes.aiAssistant,
-        builder: (context, state) => const AiAssistantScreen(),
+        builder: (context, state) {
+          final initialPrompt = state.extra as String?;
+          return AiAssistantScreen(initialPrompt: initialPrompt);
+        },
       ),
 
       // Documents & PDF
       GoRoute(
         path: AppRoutes.documents,
         builder: (context, state) => const DocumentsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.docExtractor,
+        builder: (context, state) {
+          final file = state.extra as PlatformFile?;
+          return DocExtractorScreen(initialFile: file);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.pdfCheatsheet,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          if (extra != null) {
+            return PdfCheatsheetScreen(
+              title: extra['title'] as String? ?? 'Study Revision Cheatsheet',
+              subject: extra['subject'] as String? ?? 'General',
+              summaryBullets:
+                  (extra['summaryBullets'] as List<dynamic>?)
+                          ?.map((e) => e.toString())
+                          .toList() ??
+                      const [],
+              formulas:
+                  (extra['formulas'] as List<dynamic>?)
+                          ?.map((e) => e.toString())
+                          .toList() ??
+                      const [],
+              questions:
+                  (extra['questions'] as List<dynamic>?)
+                          ?.map((e) => (e as Map).map(
+                                (k, v) => MapEntry(k.toString(), v.toString()),
+                              ))
+                          .toList() ??
+                      const [],
+              customNotes: extra['customNotes'] as String?,
+            );
+          }
+          return const PdfCheatsheetScreen();
+        },
       ),
 
       // Voice Notes
@@ -360,6 +442,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.studyGroups,
         builder: (context, state) => const StudyGroupsScreen(),
+      ),
+
+      // Virtual Study Garden
+      GoRoute(
+        path: AppRoutes.studyGarden,
+        builder: (context, state) => const StudyGardenScreen(),
+      ),
+
+      // Weekly Focus Arena Leaderboard
+      GoRoute(
+        path: AppRoutes.leaderboard,
+        builder: (context, state) => const LeaderboardScreen(),
       ),
     ],
   );

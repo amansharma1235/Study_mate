@@ -50,7 +50,9 @@ class FirebaseService {
     String userId,
     String collection,
   ) {
-    if (!_isInitialized || firestore == null) return null;
+    if (!_isInitialized || firestore == null || userId.isEmpty || userId == 'guest') {
+      return null;
+    }
     return firestore!.collection('users').doc(userId).collection(collection);
   }
 }

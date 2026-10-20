@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/local/preference_service.dart';
 import '../../data/models/exam_model.dart';
+import '../../data/models/task_model.dart';
 import '../../data/models/timetable_model.dart';
 import '../../data/repositories/timer_repository.dart';
 import '../auth/auth_controller.dart';
@@ -22,6 +23,7 @@ class HomeDashboardData {
   final Map<int, int> weeklyStudyMinutes;
   final List<ExamModel> upcomingExams;
   final List<TimetableModel> todayClasses;
+  final List<TaskModel> todayTaskList;
   final TimetableModel? nextClass;
   final String motivationalQuote;
 
@@ -38,6 +40,7 @@ class HomeDashboardData {
     required this.weeklyStudyMinutes,
     required this.upcomingExams,
     required this.todayClasses,
+    this.todayTaskList = const [],
     this.nextClass,
     required this.motivationalQuote,
   });
@@ -62,10 +65,11 @@ final homeDashboardProvider = FutureProvider<HomeDashboardData>((ref) async {
     greeting = 'Good afternoon';
   }
 
-  // Tasks statistics
+  // Tasks statistics & today's tasks list
   final tasksState = ref.watch(tasksControllerProvider);
   int todayTotal = 0;
   int todayCompleted = 0;
+  List<TaskModel> todayTaskList = [];
 
   tasksState.whenData((tasks) {
     final todayStart = DateTime(now.year, now.month, now.day);
@@ -73,9 +77,10 @@ final homeDashboardProvider = FutureProvider<HomeDashboardData>((ref) async {
 
     final todayTasks = tasks
         .where(
-          (t) => t.dueDate.isAfter(todayStart) && t.dueDate.isBefore(todayEnd),
+          (t) => (t.dueDate.isAfter(todayStart) && t.dueDate.isBefore(todayEnd)) || (t.isOverdue && !t.isCompleted),
         )
         .toList();
+    todayTaskList = todayTasks;
     todayTotal = todayTasks.length;
     todayCompleted = todayTasks.where((t) => t.isCompleted).length;
   });
@@ -130,6 +135,7 @@ final homeDashboardProvider = FutureProvider<HomeDashboardData>((ref) async {
     weeklyStudyMinutes: weeklyStudyMinutes,
     upcomingExams: upcomingExams,
     todayClasses: todayClasses,
+    todayTaskList: todayTaskList,
     nextClass: nextClass,
     motivationalQuote: quote,
   );

@@ -169,38 +169,56 @@ class _StudyGroupsScreenState extends ConsumerState<StudyGroupsScreen> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            Icon(
-                              Icons.person_outline_rounded,
-                              size: 14,
-                              color: AppColors.textMutedLight,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${group.memberCount} Members',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark
-                                    ? AppColors.textMutedDark
-                                    : AppColors.textMutedLight,
+                            Expanded(
+                              child: Wrap(
+                                spacing: 12,
+                                runSpacing: 4,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.person_outline_rounded,
+                                        size: 14,
+                                        color: AppColors.textMutedLight,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${group.memberCount} Members',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isDark
+                                              ? AppColors.textMutedDark
+                                              : AppColors.textMutedLight,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.folder_shared_outlined,
+                                        size: 14,
+                                        color: AppColors.textMutedLight,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${group.sharedNotesCount} Shared Notes',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isDark
+                                              ? AppColors.textMutedDark
+                                              : AppColors.textMutedLight,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 16),
-                            Icon(
-                              Icons.folder_shared_outlined,
-                              size: 14,
-                              color: AppColors.textMutedLight,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${group.sharedNotesCount} Shared Notes',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark
-                                    ? AppColors.textMutedDark
-                                    : AppColors.textMutedLight,
-                              ),
-                            ),
-                            const Spacer(),
+                            const SizedBox(width: 8),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,

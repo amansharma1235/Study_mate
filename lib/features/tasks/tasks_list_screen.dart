@@ -275,16 +275,20 @@ class TasksListScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        task.subject,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight,
+                      Expanded(
+                        child: Text(
+                          task.subject,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
+                          ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 8),
                       if (task.isOverdue)
                         const Text(
                           'Overdue',

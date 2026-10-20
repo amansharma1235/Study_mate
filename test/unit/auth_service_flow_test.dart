@@ -62,6 +62,12 @@ void main() {
       final authService = AuthService(FirebaseService.instance);
       const email = 'aman@studymate.app';
 
+      await authService.registerWithEmailAndPassword(
+        name: 'Aman',
+        email: email,
+        password: '123',
+      );
+
       final user = await authService.loginWithEmailAndPassword(
         email: email,
         password: '123',

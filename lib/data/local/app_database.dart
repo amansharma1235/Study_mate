@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import 'db_initializer.dart';
 import '../models/note_model.dart';
 import '../models/task_model.dart';
 import '../models/timetable_model.dart';
@@ -39,6 +40,7 @@ class AppDatabase {
   }
 
   Future<Database> _initDB(String filePath) async {
+    initDatabaseFactory();
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
@@ -341,8 +343,8 @@ class AppDatabase {
     final db = await database;
     final maps = await db.query(
       'notes',
-      where: 'userId = ? OR userId = ?',
-      whereArgs: [userId, ''],
+      where: 'userId = ?',
+      whereArgs: [userId],
       orderBy: 'isPinned DESC, updatedAt DESC',
     );
     return maps.map((m) => NoteModel.fromMap(m)).toList();
@@ -377,8 +379,8 @@ class AppDatabase {
     final db = await database;
     final maps = await db.query(
       'tasks',
-      where: 'userId = ? OR userId = ?',
-      whereArgs: [userId, ''],
+      where: 'userId = ?',
+      whereArgs: [userId],
       orderBy: 'isCompleted ASC, dueDate ASC',
     );
     return maps.map((m) => TaskModel.fromMap(m)).toList();
@@ -413,8 +415,8 @@ class AppDatabase {
     final db = await database;
     final maps = await db.query(
       'timetable',
-      where: 'userId = ? OR userId = ?',
-      whereArgs: [userId, ''],
+      where: 'userId = ?',
+      whereArgs: [userId],
       orderBy: 'dayOfWeek ASC, startTime ASC',
     );
     return maps.map((m) => TimetableModel.fromMap(m)).toList();
@@ -449,8 +451,8 @@ class AppDatabase {
     final db = await database;
     final maps = await db.query(
       'pomodoro_sessions',
-      where: 'userId = ? OR userId = ?',
-      whereArgs: [userId, ''],
+      where: 'userId = ?',
+      whereArgs: [userId],
       orderBy: 'completedAt DESC',
     );
     return maps.map((m) => PomodoroSessionModel.fromMap(m)).toList();
@@ -476,8 +478,8 @@ class AppDatabase {
     final db = await database;
     final maps = await db.query(
       'exams',
-      where: 'userId = ? OR userId = ?',
-      whereArgs: [userId, ''],
+      where: 'userId = ?',
+      whereArgs: [userId],
       orderBy: 'isCompleted ASC, examDate ASC',
     );
     return maps.map((m) => ExamModel.fromMap(m)).toList();
@@ -512,8 +514,8 @@ class AppDatabase {
     final db = await database;
     final maps = await db.query(
       'quiz_attempts',
-      where: 'userId = ? OR userId = ?',
-      whereArgs: [userId, ''],
+      where: 'userId = ?',
+      whereArgs: [userId],
       orderBy: 'completedAt DESC',
     );
     return maps.map((m) => QuizAttemptModel.fromMap(m)).toList();
@@ -554,8 +556,8 @@ class AppDatabase {
     final db = await database;
     final maps = await db.query(
       'study_sessions',
-      where: 'userId = ? OR userId = ?',
-      whereArgs: [userId, ''],
+      where: 'userId = ?',
+      whereArgs: [userId],
       orderBy: 'sessionDate ASC, startTime ASC',
     );
     return maps.map((m) => StudySessionModel.fromMap(m)).toList();
@@ -590,8 +592,8 @@ class AppDatabase {
     final db = await database;
     final maps = await db.query(
       'flashcard_decks',
-      where: 'userId = ? OR userId = ?',
-      whereArgs: [userId, ''],
+      where: 'userId = ?',
+      whereArgs: [userId],
       orderBy: 'createdAt DESC',
     );
     return maps.map((m) => FlashcardDeckModel.fromMap(m)).toList();
@@ -656,8 +658,8 @@ class AppDatabase {
     final db = await database;
     final maps = await db.query(
       'syllabus_topics',
-      where: 'userId = ? OR userId = ?',
-      whereArgs: [userId, ''],
+      where: 'userId = ?',
+      whereArgs: [userId],
       orderBy: 'subject ASC, chapter ASC',
     );
     return maps.map((m) => SyllabusTopicModel.fromMap(m)).toList();
@@ -692,8 +694,8 @@ class AppDatabase {
     final db = await database;
     final maps = await db.query(
       'habits',
-      where: 'userId = ? OR userId = ?',
-      whereArgs: [userId, ''],
+      where: 'userId = ?',
+      whereArgs: [userId],
       orderBy: 'createdAt ASC',
     );
     return maps.map((m) => HabitModel.fromMap(m)).toList();
@@ -728,8 +730,8 @@ class AppDatabase {
     final db = await database;
     final maps = await db.query(
       'documents',
-      where: 'userId = ? OR userId = ?',
-      whereArgs: [userId, ''],
+      where: 'userId = ?',
+      whereArgs: [userId],
       orderBy: 'createdAt DESC',
     );
     return maps.map((m) => DocumentModel.fromMap(m)).toList();
@@ -754,8 +756,8 @@ class AppDatabase {
     final db = await database;
     final maps = await db.query(
       'voice_notes',
-      where: 'userId = ? OR userId = ?',
-      whereArgs: [userId, ''],
+      where: 'userId = ?',
+      whereArgs: [userId],
       orderBy: 'createdAt DESC',
     );
     return maps.map((m) => VoiceNoteModel.fromMap(m)).toList();
@@ -780,8 +782,8 @@ class AppDatabase {
     final db = await database;
     final maps = await db.query(
       'job_applications',
-      where: 'userId = ? OR userId = ?',
-      whereArgs: [userId, ''],
+      where: 'userId = ?',
+      whereArgs: [userId],
       orderBy: 'appliedDate DESC',
     );
     return maps.map((m) => JobApplicationModel.fromMap(m)).toList();
@@ -830,8 +832,8 @@ class AppDatabase {
   // --- Clear all User Data on Account Deletion ---
   Future<void> clearAllUserData(String userId) async {
     final db = await database;
-    final userWhere = 'userId = ? OR userId = ?';
-    final userArgs = [userId, ''];
+    const userWhere = 'userId = ?';
+    final userArgs = [userId];
 
     await db.delete('notes', where: userWhere, whereArgs: userArgs);
     await db.delete('tasks', where: userWhere, whereArgs: userArgs);

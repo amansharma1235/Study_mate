@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
+import '../../core/routing/route_names.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_text_field.dart';
 import '../../data/local/app_database.dart';
@@ -113,9 +115,19 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.print_rounded, color: AppColors.primary),
+            tooltip: 'A4 Revision Cheatsheet Studio',
+            onPressed: () => context.push(AppRoutes.pdfCheatsheet),
+          ),
+          IconButton(
+            icon: const Icon(Icons.auto_awesome_rounded, color: AppColors.secondary),
+            tooltip: 'AI Document Extractor',
+            onPressed: () => context.push(AppRoutes.docExtractor),
+          ),
+          IconButton(
             icon: const Icon(Icons.upload_file_rounded),
-            tooltip: 'Import PDF',
-            onPressed: () => _showImportDocumentDialog(context),
+            tooltip: 'Upload & Extract',
+            onPressed: () => context.push(AppRoutes.docExtractor),
           ),
         ],
       ),
@@ -146,6 +158,107 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                     onChanged: (v) => setState(() => _searchQuery = v),
                   ),
                 ),
+
+                // AI Extractor Hero Banner
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.heroCardGradient,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.auto_awesome_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'AI Lecture & PDF Extractor',
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  fontSize: 13.5,
+                                ),
+                              ),
+                              Text(
+                                'Extract 5-bullet summary, top 5 questions & formulas',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white.withValues(alpha: 0.88),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () => context.push(AppRoutes.pdfCheatsheet),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white.withValues(alpha: 0.22),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 6),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: Text(
+                                'A4 PDF 🖨️',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            ElevatedButton(
+                              onPressed: () => context.push(AppRoutes.docExtractor),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: AppColors.primary,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: Text(
+                                'Analyze ⚡',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
 
                 // Subject Filters
                 SizedBox(
@@ -342,6 +455,15 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                   onPressed: () => Navigator.pop(ctx),
                 ),
                 actions: [
+                  IconButton(
+                    icon: const Icon(Icons.auto_awesome_rounded,
+                        color: AppColors.secondary),
+                    tooltip: 'Extract Study Kit with AI',
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      context.push(AppRoutes.docExtractor);
+                    },
+                  ),
                   IconButton(
                     icon: const Icon(Icons.share_rounded),
                     tooltip: 'Share Document',

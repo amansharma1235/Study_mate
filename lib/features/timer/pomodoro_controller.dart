@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -20,6 +21,8 @@ class PomodoroState {
   final String selectedSubject;
   final DateTime? targetEndTime;
   final bool hasRecordedCompletion;
+  final bool isStrictMode;
+  final bool hasWitheredAlert;
 
   const PomodoroState({
     required this.mode,
@@ -30,6 +33,8 @@ class PomodoroState {
     required this.selectedSubject,
     this.targetEndTime,
     this.hasRecordedCompletion = false,
+    this.isStrictMode = false,
+    this.hasWitheredAlert = false,
   });
 
   double get progress {
@@ -48,6 +53,8 @@ class PomodoroState {
     DateTime? targetEndTime,
     bool clearTargetEndTime = false,
     bool? hasRecordedCompletion,
+    bool? isStrictMode,
+    bool? hasWitheredAlert,
   }) {
     return PomodoroState(
       mode: mode ?? this.mode,
@@ -62,6 +69,8 @@ class PomodoroState {
           : (targetEndTime ?? this.targetEndTime),
       hasRecordedCompletion:
           hasRecordedCompletion ?? this.hasRecordedCompletion,
+      isStrictMode: isStrictMode ?? this.isStrictMode,
+      hasWitheredAlert: hasWitheredAlert ?? this.hasWitheredAlert,
     );
   }
 }
@@ -98,8 +107,18 @@ class PomodoroController extends StateNotifier<PomodoroState> {
           remainingSeconds: _prefs.getPomodoroFocusMinutes() * 60,
           completedFocusSessions: 0,
           selectedSubject: 'General Study',
+          isStrictMode: _prefs.isStrictMode(),
         ),
       );
+
+  Future<void> toggleStrictMode(bool enabled) async {
+    await _prefs.setStrictMode(enabled);
+    state = state.copyWith(isStrictMode: enabled);
+  }
+
+  void clearWitheredAlert() {
+    state = state.copyWith(hasWitheredAlert: false);
+  }
 
   void setSubject(String subject) {
     state = state.copyWith(selectedSubject: subject);
@@ -131,6 +150,8 @@ class PomodoroController extends StateNotifier<PomodoroState> {
     );
   }
 
+  static const int ongoingNotificationId = 8888;
+
   void start() {
     if (state.status == TimerStateStatus.running) return;
 
@@ -144,12 +165,34 @@ class PomodoroController extends StateNotifier<PomodoroState> {
       hasRecordedCompletion: false,
     );
 
+    // Schedule background exact alarm / notification for when timer ends
+    final isFocus = state.mode == PomodoroMode.focus;
+    final notifTitle = isFocus ? 'Focus Session Completed! 🎉' : 'Break Finished! 🔔';
+    final notifBody = isFocus
+        ? 'Great job on ${state.selectedSubject}. Time for a well-deserved rest.'
+        : 'Break is over. Ready for your next study session?';
+
+    _notificationService.scheduleNotification(
+      id: 9999,
+      title: notifTitle,
+      body: notifBody,
+      scheduledDate: targetEndTime,
+      channelId: NotificationService.pomodoroChannelId,
+    );
+
+    _updateOngoingNotification(state.remainingSeconds);
     _startTicker();
   }
 
   void pause() {
     if (state.status != TimerStateStatus.running) return;
     _ticker?.cancel();
+    _notificationService.cancelNotification(9999);
+    _notificationService.showOngoingTimerNotification(
+      id: ongoingNotificationId,
+      title: '⏸️ Paused: ${state.selectedSubject}',
+      body: 'Timer is paused. Open app to resume.',
+    );
 
     // Recalculate remaining seconds based on deadline
     if (state.targetEndTime != null) {
@@ -173,6 +216,8 @@ class PomodoroController extends StateNotifier<PomodoroState> {
 
   void reset() {
     _ticker?.cancel();
+    _notificationService.cancelNotification(9999);
+    _notificationService.cancelNotification(ongoingNotificationId);
     state = state.copyWith(
       status: TimerStateStatus.initial,
       remainingSeconds: state.totalDurationSeconds,
@@ -183,7 +228,49 @@ class PomodoroController extends StateNotifier<PomodoroState> {
 
   void skip() {
     _ticker?.cancel();
+    _notificationService.cancelNotification(9999);
+    _notificationService.cancelNotification(ongoingNotificationId);
     _advanceToNextMode();
+  }
+
+  Future<void> checkAppPaused() async {
+    if (state.status == TimerStateStatus.running &&
+        state.mode == PomodoroMode.focus &&
+        state.isStrictMode) {
+      // User broke focus in strict mode!
+      _ticker?.cancel();
+      _notificationService.cancelNotification(9999);
+      _notificationService.cancelNotification(ongoingNotificationId);
+
+      // Record withered tree in Garden
+      final treeRecord = jsonEncode({
+        'id': const Uuid().v4(),
+        'species': 'withered_bush',
+        'subject': state.selectedSubject,
+        'durationMinutes':
+            (state.totalDurationSeconds - state.remainingSeconds) ~/ 60,
+        'isWithered': true,
+        'plantedAt': DateTime.now().toIso8601String(),
+      });
+      await _prefs.addPlantedTreeRecord(treeRecord);
+
+      // Reset timer & trigger alert
+      state = state.copyWith(
+        status: TimerStateStatus.initial,
+        remainingSeconds: state.totalDurationSeconds,
+        clearTargetEndTime: true,
+        hasRecordedCompletion: false,
+        hasWitheredAlert: true,
+      );
+
+      _notificationService.showNotification(
+        id: 7777,
+        title: '⚠️ Focus Broken! Tree Withered 🥀',
+        body:
+            'You left StudyMate during Strict Deep Focus. Your tree in the Garden withered!',
+        channelId: NotificationService.pomodoroChannelId,
+      );
+    }
   }
 
   void checkAppResumed() {
@@ -217,12 +304,35 @@ class PomodoroController extends StateNotifier<PomodoroState> {
         _onSessionComplete();
       } else {
         state = state.copyWith(remainingSeconds: remaining);
+        // Sync ongoing notification every 5 seconds to minimize battery consumption
+        if (remaining % 5 == 0) {
+          _updateOngoingNotification(remaining);
+        }
       }
     });
   }
 
+  void _updateOngoingNotification(int remaining) {
+    final mins = remaining ~/ 60;
+    final secs = (remaining % 60).toString().padLeft(2, '0');
+    final isFocus = state.mode == PomodoroMode.focus;
+    final modeLabel = isFocus ? 'Focus' : 'Break';
+    final progress = state.totalDurationSeconds > 0
+        ? ((state.totalDurationSeconds - remaining) / state.totalDurationSeconds * 100).toInt()
+        : 0;
+
+    _notificationService.showOngoingTimerNotification(
+      id: ongoingNotificationId,
+      title: '⏱️ $modeLabel: ${state.selectedSubject} ($mins:$secs)',
+      body: '$mins min $secs sec remaining • Focus session active',
+      progress: progress,
+      maxProgress: 100,
+    );
+  }
+
   Future<void> _onSessionComplete() async {
     _ticker?.cancel();
+    _notificationService.cancelNotification(ongoingNotificationId);
 
     if (state.hasRecordedCompletion) return; // Prevent duplicate completion
 
@@ -235,12 +345,17 @@ class PomodoroController extends StateNotifier<PomodoroState> {
 
     // Show completion notification
     final isFocus = state.mode == PomodoroMode.focus;
-    final title = isFocus ? 'Focus Session Completed! 🎉' : 'Break Finished!';
+    final title = isFocus ? 'Focus Session Completed! 🎉' : 'Break Finished! 🔔';
     final body = isFocus
-        ? 'Great job on ${state.selectedSubject}. Time for a well-deserved rest.'
+        ? 'Great job on ${state.selectedSubject}! Earned +50 XP & +10 Coins 🪙. A new tree grew in your Garden 🌳!'
         : 'Ready for another round of productive study?';
 
-    _notificationService.showNotification(id: 9999, title: title, body: body);
+    _notificationService.showNotification(
+      id: 9999,
+      title: title,
+      body: body,
+      channelId: NotificationService.pomodoroChannelId,
+    );
 
     // Record session if it was a focus session
     if (isFocus) {
@@ -254,6 +369,20 @@ class PomodoroController extends StateNotifier<PomodoroState> {
       );
 
       await _repo.recordSession(sessionModel);
+      await _prefs.incrementCompletedPomodoroCount();
+      await _prefs.setUserXp(_prefs.getUserXp() + 50);
+      await _prefs.addStudyCoins(10);
+
+      // Plant tree in Virtual Study Garden
+      final treeSpecies = _prefs.getSelectedTreeId();
+      final treeRecord = jsonEncode({
+        'id': const Uuid().v4(),
+        'species': treeSpecies,
+        'subject': state.selectedSubject,
+        'durationMinutes': state.totalDurationSeconds ~/ 60,
+        'plantedAt': DateTime.now().toIso8601String(),
+      });
+      await _prefs.addPlantedTreeRecord(treeRecord);
     }
 
     _advanceToNextMode();

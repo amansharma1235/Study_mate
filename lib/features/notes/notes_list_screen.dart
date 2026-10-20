@@ -19,6 +19,7 @@ class NotesListScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final notes = ref.watch(filteredNotesProvider);
     final selectedCategory = ref.watch(notesCategoryFilterProvider);
+    final searchQuery = ref.watch(notesSearchQueryProvider);
 
     final categories = [
       'All',
@@ -28,6 +29,9 @@ class NotesListScreen extends ConsumerWidget {
       'Revision',
       'Personal',
     ];
+
+    final pinnedNotes = notes.where((n) => n.isPinned).toList();
+    final otherNotes = notes.where((n) => !n.isPinned).toList();
 
     return Scaffold(
       backgroundColor: isDark
@@ -41,6 +45,7 @@ class NotesListScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.add_rounded),
+            tooltip: 'Create Note',
             onPressed: () => context.push(AppRoutes.createNote),
           ),
         ],
@@ -61,6 +66,14 @@ class NotesListScreen extends ConsumerWidget {
                 prefixIcon: const Icon(Icons.search_rounded, size: 20),
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 fillColor: isDark ? AppColors.surfaceDark : Colors.white,
+                suffixIcon: searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear_rounded, size: 18),
+                        onPressed: () => ref
+                            .read(notesSearchQueryProvider.notifier)
+                            .state = '',
+                      )
+                    : null,
               ),
             ),
           ),
@@ -86,8 +99,8 @@ class NotesListScreen extends ConsumerWidget {
                     color: isSelected
                         ? Colors.white
                         : (isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textPrimaryLight),
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textPrimaryLight),
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                     fontSize: 13,
                   ),
@@ -96,8 +109,8 @@ class NotesListScreen extends ConsumerWidget {
                     color: isSelected
                         ? AppColors.primary
                         : (isDark
-                              ? AppColors.borderDark
-                              : AppColors.borderLight),
+                            ? AppColors.borderDark
+                            : AppColors.borderLight),
                   ),
                   onSelected: (_) {
                     ref.read(notesCategoryFilterProvider.notifier).state = cat;
@@ -108,26 +121,85 @@ class NotesListScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
 
-          // Notes List
+          // Notes Content View
           Expanded(
             child: notes.isEmpty
                 ? EmptyState(
                     icon: Icons.note_alt_outlined,
                     title: 'No Notes Found',
-                    description: 'Start organizing your thoughts and study lectures by adding a new note.',
+                    description: searchQuery.isNotEmpty
+                        ? 'No notes match "$searchQuery". Try a different search term or category.'
+                        : 'Start organizing your thoughts and study lectures by adding a new note.',
                     buttonText: 'Create Note',
                     onButtonPressed: () => context.push(AppRoutes.createNote),
                   )
-                : ListView.builder(
+                : ListView(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppDimensions.space16,
                       vertical: 8,
                     ),
-                    itemCount: notes.length,
-                    itemBuilder: (context, idx) {
-                      final note = notes[idx];
-                      return _buildNoteCard(context, ref, note, isDark);
-                    },
+                    children: [
+                      // Pinned Notes Section
+                      if (pinnedNotes.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.push_pin_rounded,
+                              size: 15,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'PINNED (${pinnedNotes.length})',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.8,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ...pinnedNotes.map(
+                          (note) => _buildNoteCard(
+                            context,
+                            ref,
+                            note,
+                            isDark,
+                            isPinnedCard: true,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
+                      // Other Notes Section
+                      if (pinnedNotes.isNotEmpty && otherNotes.isNotEmpty) ...[
+                        Text(
+                          'OTHER NOTES (${otherNotes.length})',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                            color: isDark
+                                ? AppColors.textMutedDark
+                                : AppColors.textSecondaryLight,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+
+                      ...otherNotes.map(
+                        (note) => _buildNoteCard(
+                          context,
+                          ref,
+                          note,
+                          isDark,
+                          isPinnedCard: false,
+                        ),
+                      ),
+                      const SizedBox(height: 70), // Bottom padding for FAB
+                    ],
                   ),
           ),
         ],
@@ -135,6 +207,7 @@ class NotesListScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
+        tooltip: 'Create Note',
         child: const Icon(Icons.edit_note_rounded, size: 28),
         onPressed: () => context.push(AppRoutes.createNote),
       ),
@@ -145,12 +218,19 @@ class NotesListScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     NoteModel note,
-    bool isDark,
-  ) {
+    bool isDark, {
+    required bool isPinnedCard,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: AppCard(
         onTap: () => context.push(AppRoutes.noteDetail, extra: note),
+        border: isPinnedCard
+            ? Border.all(
+                color: AppColors.primary.withValues(alpha: 0.35),
+                width: 1.5,
+              )
+            : null,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -159,6 +239,8 @@ class NotesListScreen extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     note.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -175,9 +257,10 @@ class NotesListScreen extends ConsumerWidget {
                     color: note.isPinned
                         ? AppColors.primary
                         : (isDark
-                              ? AppColors.textMutedDark
-                              : AppColors.textMutedLight),
+                            ? AppColors.textMutedDark
+                            : AppColors.textMutedLight),
                   ),
+                  tooltip: note.isPinned ? 'Unpin Note' : 'Pin Note',
                   onPressed: () {
                     ref.read(notesControllerProvider.notifier).togglePin(note);
                   },

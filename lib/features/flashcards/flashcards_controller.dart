@@ -19,6 +19,82 @@ final flashcardDecksProvider =
       return FlashcardDecksController(db, userId, firebaseService: firebaseService);
     });
 
+class LeitnerDeckMastery {
+  final int box1Learning; // intervalDays <= 1
+  final int box2Review; // intervalDays 2-3
+  final int box3Consolidating; // intervalDays 4-14
+  final int box4Mastered; // intervalDays > 14
+  final int totalCards;
+  final int dueToday;
+  final int retentionPercentage;
+
+  const LeitnerDeckMastery({
+    required this.box1Learning,
+    required this.box2Review,
+    required this.box3Consolidating,
+    required this.box4Mastered,
+    required this.totalCards,
+    required this.dueToday,
+    required this.retentionPercentage,
+  });
+
+  factory LeitnerDeckMastery.fromCards(List<FlashcardModel> cards) {
+    if (cards.isEmpty) {
+      return const LeitnerDeckMastery(
+        box1Learning: 0,
+        box2Review: 0,
+        box3Consolidating: 0,
+        box4Mastered: 0,
+        totalCards: 0,
+        dueToday: 0,
+        retentionPercentage: 0,
+      );
+    }
+
+    int b1 = 0;
+    int b2 = 0;
+    int b3 = 0;
+    int b4 = 0;
+    int due = 0;
+    final now = DateTime.now();
+
+    for (final c in cards) {
+      if (c.nextReviewDate.isBefore(now) || c.repetitionNumber == 0) {
+        due++;
+      }
+      if (c.intervalDays <= 1) {
+        b1++;
+      } else if (c.intervalDays <= 3) {
+        b2++;
+      } else if (c.intervalDays <= 14) {
+        b3++;
+      } else {
+        b4++;
+      }
+    }
+
+    final score = (b4 * 100 + b3 * 75 + b2 * 45 + b1 * 15) / (cards.length * 100);
+    final retention = (score * 100).round().clamp(0, 100);
+
+    return LeitnerDeckMastery(
+      box1Learning: b1,
+      box2Review: b2,
+      box3Consolidating: b3,
+      box4Mastered: b4,
+      totalCards: cards.length,
+      dueToday: due,
+      retentionPercentage: retention,
+    );
+  }
+}
+
+final deckMasteryProvider =
+    FutureProvider.family<LeitnerDeckMastery, String>((ref, deckId) async {
+  final db = ref.watch(appDatabaseProvider);
+  final cards = await db.getFlashcards(deckId);
+  return LeitnerDeckMastery.fromCards(cards);
+});
+
 class FlashcardDecksController
     extends StateNotifier<AsyncValue<List<FlashcardDeckModel>>> {
   final AppDatabase _db;
@@ -115,6 +191,51 @@ class FlashcardDecksController
     }
 
     await loadDecks();
+  }
+
+  Future<FlashcardDeckModel> getOrCreateDeckForSubject({
+    required String subject,
+    required String title,
+  }) async {
+    final decks = state.value ?? await _db.getFlashcardDecks(_userId);
+    final existing = decks
+        .where((d) => d.title.trim().toLowerCase() == title.trim().toLowerCase())
+        .firstOrNull;
+    if (existing != null) return existing;
+
+    final newDeck = FlashcardDeckModel(
+      id: const Uuid().v4(),
+      userId: _userId,
+      title: title.trim(),
+      subject: subject.trim(),
+      description: 'Auto-generated flashcards from study notes',
+      colorHex: '#6258E8',
+      cardCount: 0,
+    );
+
+    await _db.insertFlashcardDeck(newDeck);
+    await loadDecks();
+    return newDeck;
+  }
+
+  Future<int> addMultipleCardsToDeck({
+    required String deckId,
+    required List<Map<String, String>> cards,
+  }) async {
+    int count = 0;
+    for (final c in cards) {
+      final front = c['question'] ?? c['front'] ?? '';
+      final back = c['answer'] ?? c['back'] ?? '';
+      if (front.trim().isNotEmpty && back.trim().isNotEmpty) {
+        await addCardToDeck(
+          deckId: deckId,
+          front: front.trim(),
+          back: back.trim(),
+        );
+        count++;
+      }
+    }
+    return count;
   }
 
   Future<void> addCardToDeck({

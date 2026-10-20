@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
@@ -37,6 +40,16 @@ class UserAvatar extends StatelessWidget {
     final isNetworkUrl =
         cleanPhoto != null &&
         (cleanPhoto.startsWith('http://') || cleanPhoto.startsWith('https://'));
+    final isBase64 =
+        cleanPhoto != null && cleanPhoto.startsWith('data:image');
+    final isLocalFile = cleanPhoto != null &&
+        !isPreset &&
+        !isNetworkUrl &&
+        !isBase64 &&
+        !kIsWeb &&
+        (cleanPhoto.startsWith('/') ||
+            cleanPhoto.contains(RegExp(r'^[a-zA-Z]:[/\\]')) ||
+            File(cleanPhoto).existsSync());
 
     Widget avatarContent;
 
@@ -51,10 +64,41 @@ class UserAvatar extends StatelessWidget {
           ),
         ),
       );
+    } else if (isBase64) {
+      try {
+        final commaIdx = cleanPhoto.indexOf(',');
+        final base64Str = commaIdx != -1
+            ? cleanPhoto.substring(commaIdx + 1)
+            : cleanPhoto;
+        final bytes = base64Decode(base64Str);
+        avatarContent = ClipOval(
+          child: Image.memory(
+            bytes,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) =>
+                _buildFallbackInitial(),
+          ),
+        );
+      } catch (_) {
+        avatarContent = _buildFallbackInitial();
+      }
     } else if (isNetworkUrl) {
       avatarContent = ClipOval(
         child: Image.network(
           cleanPhoto,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildFallbackInitial(),
+        ),
+      );
+    } else if (isLocalFile) {
+      final file = File(cleanPhoto);
+      avatarContent = ClipOval(
+        child: Image.file(
+          file,
           width: size,
           height: size,
           fit: BoxFit.cover,
