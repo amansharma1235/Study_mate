@@ -167,13 +167,40 @@ class PreferenceService {
   static const String _keyAppLockPin = 'security_app_lock_pin';
   static const String _keyBiometricsEnabled = 'security_biometrics_enabled';
 
+  static const String _pinSalt = 'studymate_secure_salt_#8921!';
+
+  static String hashPin(String rawPin) {
+    if (rawPin.isEmpty) return '';
+    final input = '$_pinSalt$rawPin$_pinSalt';
+    int h1 = 0x811c9dc5;
+    int h2 = 0x55aa55aa;
+    for (int i = 0; i < input.length; i++) {
+      final code = input.codeUnitAt(i);
+      h1 = ((h1 ^ code) * 0x01000193) & 0xFFFFFFFF;
+      h2 = ((h2 ^ (code * 31)) * 0x5bd1e995) & 0xFFFFFFFF;
+    }
+    return '${h1.toRadixString(16).padLeft(8, '0')}${h2.toRadixString(16).padLeft(8, '0')}';
+  }
+
   bool isAppLockEnabled() => _prefs.getBool(_keyAppLockEnabled) ?? false;
   Future<void> setAppLockEnabled(bool enabled) =>
       _prefs.setBool(_keyAppLockEnabled, enabled);
 
   String getAppLockPin() => _prefs.getString(_keyAppLockPin) ?? '';
-  Future<void> setAppLockPin(String pin) =>
-      _prefs.setString(_keyAppLockPin, pin);
+  
+  bool hasAppLockPin() => (_prefs.getString(_keyAppLockPin) ?? '').isNotEmpty;
+
+  bool verifyPin(String enteredPin) {
+    final stored = _prefs.getString(_keyAppLockPin) ?? '';
+    if (stored.isEmpty) return false;
+    // Backward compatibility for existing plaintext PINs
+    if (stored == enteredPin) return true;
+    return stored == hashPin(enteredPin);
+  }
+
+  Future<void> setAppLockPin(String pin) async {
+    await _prefs.setString(_keyAppLockPin, hashPin(pin));
+  }
 
   bool isBiometricsEnabled() => _prefs.getBool(_keyBiometricsEnabled) ?? false;
   Future<void> setBiometricsEnabled(bool enabled) =>

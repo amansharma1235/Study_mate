@@ -93,6 +93,19 @@ class AuthController extends StateNotifier<AsyncValue<UserProfileModel?>> {
     });
   }
 
+  Future<void> signInWithGoogle() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final user = await _authService.signInWithGoogle();
+      _ref.read(currentProfileProvider.notifier).state = user;
+      _invalidateUserData();
+      if (user.uid.isNotEmpty) {
+        _ref.read(syncStateProvider.notifier).triggerSync(user.uid);
+      }
+      return user;
+    });
+  }
+
   Future<void> sendPasswordReset(String email) async {
     await _authService.sendPasswordResetEmail(email);
   }

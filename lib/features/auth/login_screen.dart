@@ -50,12 +50,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  void _handleGoogleSignIn() {
-    AppDialogs.showSnackBar(
-      context,
-      message:
-          'Google Sign-In will be enabled in the next update. Please sign in with your email and password.',
-    );
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      await ref.read(authControllerProvider.notifier).signInWithGoogle();
+      if (!mounted) return;
+      context.go(AppRoutes.home);
+    } catch (e) {
+      if (!mounted) return;
+      AppDialogs.showSnackBar(context, message: e.toString(), isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override

@@ -65,7 +65,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     final prefs = ref.read(preferenceServiceProvider);
 
     if (_isTestingLock) {
-      if (_enteredPin == _currentPin) {
+      if (prefs.verifyPin(_enteredPin)) {
         AppHaptics.celebration();
         if (widget.isStartupUnlock) {
           if (!mounted) return;

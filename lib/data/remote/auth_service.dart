@@ -8,6 +8,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../core/errors/app_exception.dart';
 import '../models/user_profile_model.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'firebase_service.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) {
@@ -347,6 +348,95 @@ class AuthService {
     }
   }
 
+  Future<UserProfileModel> signInWithGoogle() async {
+    try {
+      if (isFirebaseActive) {
+        final GoogleSignIn googleSignIn = GoogleSignIn();
+        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+        if (googleUser == null) {
+          throw const AuthException('Google Sign-In was cancelled.');
+        }
+
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+        final OAuthCredential credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        final UserCredential userCredential =
+            await FirebaseAuth.instance.signInWithCredential(credential);
+        final User? user = userCredential.user;
+        if (user == null) {
+          throw const AuthException('Google Sign-In failed to return user.');
+        }
+
+        String displayName =
+            user.displayName ?? googleUser.displayName ?? 'Student';
+        String? photoUrl = user.photoURL ?? googleUser.photoUrl;
+        int dailyGoal = 120;
+
+        if (_firebaseService.firestore != null) {
+          try {
+            final doc = await _firebaseService.firestore!
+                .collection('users')
+                .doc(user.uid)
+                .get();
+            if (doc.exists && doc.data() != null) {
+              final d = doc.data()!;
+              if ((d['displayName'] as String?)?.isNotEmpty == true) {
+                displayName = d['displayName'] as String;
+              }
+              if ((d['photoUrl'] as String?)?.isNotEmpty == true) {
+                photoUrl = d['photoUrl'] as String;
+              }
+              if (d['dailyGoalMinutes'] != null) {
+                dailyGoal = (d['dailyGoalMinutes'] as num).toInt();
+              }
+            }
+          } catch (_) {}
+        }
+
+        final profile = UserProfileModel(
+          uid: user.uid,
+          email: user.email ?? googleUser.email,
+          displayName: displayName,
+          photoUrl: photoUrl,
+          dailyGoalMinutes: dailyGoal,
+          createdAt: user.metadata.creationTime ?? DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+
+        if (_firebaseService.firestore != null) {
+          try {
+            await _firebaseService.firestore!
+                .collection('users')
+                .doc(user.uid)
+                .set(profile.toMap(), SetOptions(merge: true));
+          } catch (e) {
+            debugPrint('Error syncing Google profile to Firestore: $e');
+          }
+        }
+
+        await _secureStorage.write(
+          key: _keySessionUser,
+          value: jsonEncode(profile.toMap()),
+        );
+
+        return profile;
+      } else {
+        throw const AuthException(
+          'Firebase is not active. Please sign in with email and password.',
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_mapFirebaseError(e), code: e.code);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException('Google sign-in error: $e');
+    }
+  }
+
   Future<void> sendPasswordResetEmail(String email) async {
     try {
       if (isFirebaseActive) {
@@ -468,6 +558,9 @@ class AuthService {
     try {
       if (isFirebaseActive) {
         await FirebaseAuth.instance.signOut();
+        try {
+          await GoogleSignIn().signOut();
+        } catch (_) {}
       }
       await _secureStorage.delete(key: _keySessionUser);
     } catch (e) {
