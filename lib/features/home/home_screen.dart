@@ -68,19 +68,23 @@ class HomeScreen extends ConsumerWidget {
                 _buildHeader(data, textPrimary, textMuted, isDark),
                 const SizedBox(height: 16),
 
-                // 2. Today's Study Goal
+                // 2. StudyMate AI Tutor Hero Card
+                _buildAiTutorHeroCard(context, isDark),
+                const SizedBox(height: 16),
+
+                // 3. Today's Study Goal
                 _buildStudyGoalCard(data, cardBg, borderColor, textPrimary, textMuted),
                 const SizedBox(height: 16),
 
-                // 3. Four Quick Actions
+                // 4. Four Quick Actions
                 _buildQuickActions(context, cardBg, borderColor, textPrimary, isDark),
                 const SizedBox(height: 20),
 
-                // 4. Today's Tasks
+                // 5. Today's Tasks
                 _buildTodayTasks(context, ref, data, cardBg, borderColor, textPrimary, textMuted, isDark),
                 const SizedBox(height: 16),
 
-                // 5. Upcoming Exam
+                // 6. Upcoming Exam
                 _buildUpcomingExam(context, data, cardBg, borderColor, textPrimary, textMuted, isDark),
                 const SizedBox(height: 80), // Room for Floating Action Button
               ],
@@ -153,6 +157,11 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       actions: [
+        IconButton(
+          icon: const Icon(Icons.auto_awesome_rounded, color: _primaryColor, size: 21),
+          tooltip: 'AI Tutor',
+          onPressed: () => context.push(AppRoutes.aiAssistant),
+        ),
         IconButton(
           icon: syncState.isSyncing
               ? const SizedBox(
@@ -324,7 +333,227 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// 2. Today's Study Goal Card
+  /// 2. StudyMate AI Tutor Interactive Card
+  Widget _buildAiTutorHeroCard(BuildContext context, bool isDark) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: isDark
+              ? [const Color(0xFF1E1B4B), const Color(0xFF312E81)]
+              : [const Color(0xFF4338CA), const Color(0xFF6366F1)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4338CA).withValues(alpha: 0.25),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.push(AppRoutes.aiAssistant),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.auto_awesome_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'StudyMate AI Tutor',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'LIVE 24/7',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Doubt solving, math, concepts in Hindi & English',
+                            style: GoogleFonts.inter(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontSize: 11.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: Colors.white70,
+                      size: 14,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Interactive Quick Search Bar
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.search_rounded,
+                        color: Colors.white70,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Ask any doubt or formula...',
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'Ask AI',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF4338CA),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // Quick Concept Chips
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildAiPromptChip(
+                        context,
+                        label: "Newton's 3 Laws",
+                        query: "Newton's three laws of motion with daily examples in simple Hindi & English",
+                      ),
+                      const SizedBox(width: 6),
+                      _buildAiPromptChip(
+                        context,
+                        label: 'Photosynthesis',
+                        query: 'Explain the process of photosynthesis and its formula clearly',
+                      ),
+                      const SizedBox(width: 6),
+                      _buildAiPromptChip(
+                        context,
+                        label: 'Pythagoras Theorem',
+                        query: 'What is Pythagoras theorem? Give formula and a solved example',
+                      ),
+                      const SizedBox(width: 6),
+                      _buildAiPromptChip(
+                        context,
+                        label: 'Periodic Table',
+                        query: 'Explain modern periodic table trends: atomic radius and valency',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAiPromptChip(
+    BuildContext context, {
+    required String label,
+    required String query,
+  }) {
+    return InkWell(
+      onTap: () => context.push(AppRoutes.aiAssistant, extra: query),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.25),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.flash_on_rounded, color: Color(0xFFFCD34D), size: 12),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 3. Today's Study Goal Card
   Widget _buildStudyGoalCard(
     HomeDashboardData data,
     Color cardBg,
