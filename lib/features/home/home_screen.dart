@@ -3,22 +3,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/routing/route_names.dart';
 import '../../core/utils/date_formatter.dart';
-import '../../core/widgets/app_card.dart';
 import '../../core/widgets/loading_skeleton.dart';
 import '../../core/widgets/speed_dial_fab.dart';
 import '../../core/widgets/user_avatar.dart';
+import '../../data/models/exam_model.dart';
 import '../../data/models/task_model.dart';
 import '../../data/remote/sync_service.dart';
 import '../auth/auth_controller.dart';
 import '../tasks/tasks_controller.dart';
 import 'home_controller.dart';
 
+/// Clean, minimal, and student-focused Home Screen UI.
+/// Adheres strictly to the requested 5 essential sections and color palette.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
+
+  // UI Theme Constants as specified
+  static const Color _primaryColor = Color(0xFF6258E8);
+  static const Color _secondaryColor = Color(0xFF3987F5);
+  static const Color _lightBg = Color(0xFFF7F7FC);
+  static const Color _darkBg = Color(0xFF111327);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,151 +34,20 @@ class HomeScreen extends ConsumerWidget {
     final dashboardAsync = ref.watch(homeDashboardProvider);
     final syncState = ref.watch(syncStateProvider);
 
+    final bgColor = isDark ? _darkBg : _lightBg;
+    final cardBg = isDark ? const Color(0xFF191B33) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF26294D) : const Color(0xFFEAEAEE);
+    final textPrimary = isDark ? Colors.white : const Color(0xFF1A1C29);
+    final textMuted = isDark ? const Color(0xFF8E95AA) : const Color(0xFF6B7280);
+
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.backgroundDark
-          : AppColors.backgroundLight,
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.28),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.asset(
-                  'assets/branding/studymate_logo.png',
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Study',
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 20,
-                        color: isDark ? Colors.white : AppColors.primary,
-                        letterSpacing: -0.4,
-                      ),
-                    ),
-                    Text(
-                      'Mate',
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 20,
-                        color: AppColors.secondary,
-                        letterSpacing: -0.4,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  'Student Companion',
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 10.5,
-                    color: isDark
-                        ? AppColors.textMutedDark
-                        : AppColors.textSecondaryLight,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: syncState.isSyncing
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.primary,
-                    ),
-                  )
-                : Icon(
-                    syncState.isCloudConnected
-                        ? Icons.cloud_done_rounded
-                        : Icons.cloud_off_rounded,
-                    color: syncState.isCloudConnected
-                        ? AppColors.success
-                        : AppColors.textMutedLight,
-                    size: 20,
-                  ),
-            tooltip: syncState.isCloudConnected ? 'Cloud Synced' : 'Offline Storage',
-            onPressed: () {
-              if (user != null && user.uid.isNotEmpty) {
-                ref.read(syncStateProvider.notifier).triggerSync(user.uid);
-              }
-            },
-          ),
-          InkWell(
-            onTap: () => context.push(AppRoutes.profile),
-            borderRadius: BorderRadius.circular(20),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-              child: UserAvatar(
-                photoUrl: user?.photoUrl,
-                name: user?.displayName ?? 'Student',
-                size: 34,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
+      backgroundColor: bgColor,
+      appBar: _buildAppBar(context, ref, user, syncState, isDark, textPrimary, textMuted),
       body: dashboardAsync.when(
-        loading: () => SingleChildScrollView(
-          padding: const EdgeInsets.all(AppDimensions.space16),
-          child: Column(
-            children: const [
-              LoadingSkeleton(width: double.infinity, height: 120),
-              SizedBox(height: 16),
-              LoadingSkeleton(width: double.infinity, height: 140),
-              SizedBox(height: 16),
-              LoadingSkeleton(width: double.infinity, height: 160),
-            ],
-          ),
-        ),
-        error: (err, stack) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
-                const SizedBox(height: 12),
-                Text('Could not load dashboard: $err'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => ref.invalidate(homeDashboardProvider),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          ),
-        ),
+        loading: () => _buildLoadingState(isDark),
+        error: (err, _) => _buildErrorState(ref, err),
         data: (data) => RefreshIndicator(
+          color: _primaryColor,
           onRefresh: () async {
             ref.invalidate(homeDashboardProvider);
             ref.read(tasksControllerProvider.notifier).loadTasks();
@@ -188,34 +64,25 @@ class HomeScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Clean Greeting & Date Header
-                _buildHeader(context, data, isDark),
-                const SizedBox(height: AppDimensions.space16),
+                // 1. Compact Header
+                _buildHeader(data, textPrimary, textMuted),
+                const SizedBox(height: 16),
 
-                // 2. Primary Study Focus Card (Timer & Daily Goal)
-                _buildFocusGoalCard(context, data, isDark),
-                const SizedBox(height: AppDimensions.space16),
+                // 2. Today's Study Goal
+                _buildStudyGoalCard(data, cardBg, borderColor, textPrimary, textMuted),
+                const SizedBox(height: 16),
 
-                // 3. AI Tutor Interactive Banner Card
-                _buildAiTutorHeroCard(context, isDark),
-                const SizedBox(height: AppDimensions.space16),
+                // 3. Four Quick Actions
+                _buildQuickActions(context, cardBg, borderColor, textPrimary, isDark),
+                const SizedBox(height: 20),
 
-                // 4. Today's Tasks & Priorities Card
-                _buildTodayTasksCard(context, ref, data, isDark),
-                const SizedBox(height: AppDimensions.space20),
+                // 4. Today's Tasks
+                _buildTodayTasks(context, ref, data, cardBg, borderColor, textPrimary, textMuted, isDark),
+                const SizedBox(height: 16),
 
-                // 5. Clean 4-Way Quick Shortcuts Hub
-                Text(
-                  'Quick Study Hub',
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.space12),
-                _buildQuickHubGrid(context, isDark),
-                const SizedBox(height: 80), // Padding for Floating Action Button
+                // 5. Upcoming Exam
+                _buildUpcomingExam(context, data, cardBg, borderColor, textPrimary, textMuted, isDark),
+                const SizedBox(height: 80), // Room for Floating Action Button
               ],
             ),
           ),
@@ -225,509 +92,521 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// 1. Clean Greeting Header with Day Capsule & Streak Pill
-  Widget _buildHeader(BuildContext context, HomeDashboardData data, bool isDark) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${data.greeting}, ${data.userName} 👋',
-                style: GoogleFonts.inter(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.4,
-                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+  /// AppBar: StudyMate Branding + Sync Status + Profile Avatar
+  PreferredSizeWidget _buildAppBar(
+    BuildContext context,
+    WidgetRef ref,
+    dynamic user,
+    SyncState syncState,
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+  ) {
+    return AppBar(
+      backgroundColor: isDark ? _darkBg : _lightBg,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      titleSpacing: AppDimensions.space16,
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: _primaryColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/branding/studymate_logo.png',
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const Icon(
+                  Icons.school_rounded,
+                  color: Colors.white,
+                  size: 20,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today_rounded,
-                    size: 13,
-                    color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    DateFormatter.formatDate(DateTime.now()),
-                    style: GoogleFonts.inter(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-
-        // Golden Streak Badge
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.2 : 0.12),
-            borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-            border: Border.all(
-              color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
-              width: 1,
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.local_fire_department_rounded,
-                color: Color(0xFFD97706),
-                size: 18,
+          const SizedBox(width: 8),
+          RichText(
+            text: TextSpan(
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.3,
               ),
-              const SizedBox(width: 4),
-              Text(
-                '${data.studyStreakDays}d Streak',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12.5,
-                  color: isDark ? const Color(0xFFFCD34D) : const Color(0xFFB45309),
+              children: [
+                TextSpan(
+                  text: 'Study',
+                  style: TextStyle(color: textPrimary),
                 ),
-              ),
-            ],
+                const TextSpan(
+                  text: 'Mate',
+                  style: TextStyle(color: _secondaryColor),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          icon: syncState.isSyncing
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: _primaryColor,
+                  ),
+                )
+              : Icon(
+                  syncState.isCloudConnected
+                      ? Icons.cloud_done_rounded
+                      : Icons.cloud_off_rounded,
+                  color: syncState.isCloudConnected
+                      ? const Color(0xFF10B981)
+                      : textMuted,
+                  size: 20,
+                ),
+          tooltip: syncState.isCloudConnected ? 'Cloud Synced' : 'Offline Mode',
+          onPressed: () {
+            if (user != null && user.uid.isNotEmpty) {
+              ref.read(syncStateProvider.notifier).triggerSync(user.uid);
+            }
+          },
+        ),
+        InkWell(
+          onTap: () => context.push(AppRoutes.profile),
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+            child: UserAvatar(
+              photoUrl: user?.photoUrl,
+              name: user?.displayName ?? 'Student',
+              size: 32,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+      ],
+    );
+  }
+
+  /// 1. Compact Header: Greeting and current date
+  Widget _buildHeader(HomeDashboardData data, Color textPrimary, Color textMuted) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '${data.greeting}, ${data.userName}',
+          style: GoogleFonts.inter(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
+            color: textPrimary,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          DateFormatter.formatDate(DateTime.now()),
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: textMuted,
           ),
         ),
       ],
     );
   }
 
-  /// 2. Primary Study Focus Card (Goal Progress & Big Start Button)
-  Widget _buildFocusGoalCard(BuildContext context, HomeDashboardData data, bool isDark) {
+  /// 2. Today's Study Goal Card
+  Widget _buildStudyGoalCard(
+    HomeDashboardData data,
+    Color cardBg,
+    Color borderColor,
+    Color textPrimary,
+    Color textMuted,
+  ) {
     final progressPercent = (data.goalProgress * 100).toInt();
 
-    return AppCard(
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.timer_rounded,
-                      color: AppColors.primary,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Daily Study Focus',
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  '$progressPercent%',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // Minutes progress line
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
               Text(
-                '${data.todayStudyMinutes} mins completed',
+                "Today's Study Goal",
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                ),
+              ),
+              Text(
+                '$progressPercent%',
                 style: GoogleFonts.inter(
                   fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                ),
-              ),
-              Text(
-                'Goal: ${data.dailyGoalMinutes} mins',
-                style: GoogleFonts.inter(
-                  fontSize: 12.5,
-                  color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+                  fontWeight: FontWeight.w700,
+                  color: _primaryColor,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-
-          // Smooth Progress Bar
           ClipRRect(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: data.goalProgress,
-              backgroundColor: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : AppColors.primary.withValues(alpha: 0.12),
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
-              minHeight: 8,
+              backgroundColor: _primaryColor.withValues(alpha: 0.12),
+              valueColor: const AlwaysStoppedAnimation<Color>(_primaryColor),
+              minHeight: 6,
             ),
           ),
-          const SizedBox(height: 16),
-
-          // Prominent 1-Tap Action Button
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onPressed: () => context.push(AppRoutes.timer),
-              icon: const Icon(Icons.play_arrow_rounded, size: 22),
-              label: Text(
-                'Start Focus Session (25 min)',
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${data.todayStudyMinutes}m completed',
                 style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
                 ),
               ),
-            ),
+              Text(
+                'Target: ${data.dailyGoalMinutes}m',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: textMuted,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  /// 3. AI Tutor Interactive Banner Card
-  Widget _buildAiTutorHeroCard(BuildContext context, bool isDark) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF1E1B4B), const Color(0xFF312E81)]
-              : [const Color(0xFF4338CA), const Color(0xFF6366F1)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF4338CA).withValues(alpha: 0.28),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+  /// 3. Four Quick Actions: Start Studying, My Tasks, My Notes, Timetable
+  Widget _buildQuickActions(
+    BuildContext context,
+    Color cardBg,
+    Color borderColor,
+    Color textPrimary,
+    bool isDark,
+  ) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildActionItem(
+            icon: Icons.play_arrow_rounded,
+            label: 'Start\nStudying',
+            iconColor: _primaryColor,
+            bgColor: _primaryColor.withValues(alpha: 0.1),
+            cardBg: cardBg,
+            borderColor: borderColor,
+            textColor: textPrimary,
+            onTap: () => context.push(AppRoutes.timer),
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => context.push(AppRoutes.aiAssistant),
-          borderRadius: BorderRadius.circular(18),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: Colors.white,
-                    size: 26,
-                  ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildActionItem(
+            icon: Icons.check_circle_outline_rounded,
+            label: 'My\nTasks',
+            iconColor: _secondaryColor,
+            bgColor: _secondaryColor.withValues(alpha: 0.1),
+            cardBg: cardBg,
+            borderColor: borderColor,
+            textColor: textPrimary,
+            onTap: () => context.go(AppRoutes.tasks),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildActionItem(
+            icon: Icons.edit_note_rounded,
+            label: 'My\nNotes',
+            iconColor: const Color(0xFF10B981),
+            bgColor: const Color(0xFF10B981).withValues(alpha: 0.1),
+            cardBg: cardBg,
+            borderColor: borderColor,
+            textColor: textPrimary,
+            onTap: () => context.go(AppRoutes.notes),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildActionItem(
+            icon: Icons.calendar_today_rounded,
+            label: 'Time\ntable',
+            iconColor: const Color(0xFFF59E0B),
+            bgColor: const Color(0xFFF59E0B).withValues(alpha: 0.1),
+            cardBg: cardBg,
+            borderColor: borderColor,
+            textColor: textPrimary,
+            onTap: () => context.push(AppRoutes.timetable),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionItem({
+    required IconData icon,
+    required String label,
+    required Color iconColor,
+    required Color bgColor,
+    required Color cardBg,
+    required Color borderColor,
+    required Color textColor,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: cardBg,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: borderColor),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x04000000),
+                blurRadius: 6,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'StudyMate AI Tutor',
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF10B981),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'LIVE',
-                              style: TextStyle(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        'Ask any question, solve math or get concept explanations in Hindi & English.',
-                        style: GoogleFonts.inter(
-                          color: Colors.white.withValues(alpha: 0.88),
-                          fontSize: 12,
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                  ),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                style: GoogleFonts.inter(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                  height: 1.2,
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.16),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.arrow_forward_rounded,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  /// 4. Today's Tasks & Priorities Card
-  Widget _buildTodayTasksCard(
+  /// 4. Today's Tasks (3 most relevant incomplete tasks with View All)
+  Widget _buildTodayTasks(
     BuildContext context,
     WidgetRef ref,
     HomeDashboardData data,
+    Color cardBg,
+    Color borderColor,
+    Color textPrimary,
+    Color textMuted,
     bool isDark,
   ) {
-    final tasks = data.todayTaskList;
+    // Filter only incomplete tasks for today (or overdue incomplete)
+    final pendingTasks = data.todayTaskList.where((t) => !t.isCompleted).take(3).toList();
 
-    return AppCard(
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.checklist_rounded,
-                      color: Color(0xFF059669),
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    "Today's Tasks",
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                    ),
-                  ),
-                ],
-              ),
-              TextButton(
-                onPressed: () => context.go(AppRoutes.tasks),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              Text(
+                "Today's Tasks",
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
                 ),
+              ),
+              GestureDetector(
+                onTap: () => context.go(AppRoutes.tasks),
                 child: Text(
-                  'View All (${data.todayTasksCompleted}/${data.todayTasksTotal})',
-                  style: const TextStyle(
+                  'View All',
+                  style: GoogleFonts.inter(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+                    color: _primaryColor,
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-
-          if (tasks.isEmpty) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.04)
-                    : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                ),
-              ),
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.task_alt_rounded,
-                    size: 28,
-                    color: Color(0xFF10B981),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'No tasks scheduled for today!',
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Add your daily study goals to stay on track.',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    onPressed: () => context.push(AppRoutes.createTask),
-                    icon: const Icon(Icons.add_rounded, size: 16),
-                    label: const Text('Add Today Task'),
-                  ),
-                ],
-              ),
-            ),
-          ] else ...[
-            ...tasks.take(3).map((task) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Material(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.03)
-                      : const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(10),
-                  child: InkWell(
-                    onTap: () => context.push(AppRoutes.editTask, extra: task),
-                    borderRadius: BorderRadius.circular(10),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () async {
-                              await ref.read(tasksControllerProvider.notifier).toggleTask(task);
-                              ref.invalidate(homeDashboardProvider);
-                            },
-                            child: Icon(
-                              task.isCompleted
-                                  ? Icons.check_circle_rounded
-                                  : Icons.radio_button_unchecked_rounded,
-                              color: task.isCompleted
-                                  ? const Color(0xFF10B981)
-                                  : (isDark ? Colors.white38 : Colors.black38),
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  task.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13.5,
-                                    decoration: task.isCompleted
-                                        ? TextDecoration.lineThrough
-                                        : null,
-                                    color: task.isCompleted
-                                        ? (isDark ? Colors.white38 : Colors.black38)
-                                        : (isDark
-                                            ? AppColors.textPrimaryDark
-                                            : AppColors.textPrimaryLight),
-                                  ),
-                                ),
-                                Text(
-                                  task.subject,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: isDark
-                                        ? AppColors.textMutedDark
-                                        : AppColors.textSecondaryLight,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          _buildPriorityPill(task.priority),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ],
+          if (pendingTasks.isEmpty)
+            _buildTasksEmptyState(context, textMuted, isDark)
+          else
+            ...pendingTasks.map((task) => _buildTaskRow(context, ref, task, textPrimary, textMuted, isDark)),
         ],
       ),
     );
   }
 
-  /// Priority Tag for Task
-  Widget _buildPriorityPill(TaskPriority priority) {
+  Widget _buildTasksEmptyState(BuildContext context, Color textMuted, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.check_circle_outline_rounded,
+            color: Color(0xFF10B981),
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'No pending tasks for today',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: textMuted,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => context.push(AppRoutes.createTask),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              '+ Add Task',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: _primaryColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTaskRow(
+    BuildContext context,
+    WidgetRef ref,
+    TaskModel task,
+    Color textPrimary,
+    Color textMuted,
+    bool isDark,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: InkWell(
+        onTap: () => context.push(AppRoutes.editTask, extra: task),
+        borderRadius: BorderRadius.circular(8),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () async {
+                await ref.read(tasksControllerProvider.notifier).toggleTask(task);
+                ref.invalidate(homeDashboardProvider);
+              },
+              child: Icon(
+                task.isCompleted
+                    ? Icons.check_circle_rounded
+                    : Icons.radio_button_unchecked_rounded,
+                color: task.isCompleted
+                    ? const Color(0xFF10B981)
+                    : (isDark ? Colors.white38 : Colors.black26),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    DateFormatter.formatDate(task.dueDate),
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            _buildPriorityBadge(task.priority),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPriorityBadge(TaskPriority priority) {
     Color bg;
     Color text;
     String label;
@@ -751,15 +630,15 @@ class HomeScreen extends ConsumerWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 9.5,
           fontWeight: FontWeight.w700,
           color: text,
         ),
@@ -767,104 +646,237 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// 5. Clean 4-Way Quick Shortcuts Hub
-  Widget _buildQuickHubGrid(BuildContext context, bool isDark) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildHubItem(
-            context,
-            icon: Icons.description_outlined,
-            title: 'Notes',
-            color: const Color(0xFF3B82F6),
-            onTap: () => context.go(AppRoutes.notes),
-            isDark: isDark,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _buildHubItem(
-            context,
-            icon: Icons.calendar_month_rounded,
-            title: 'Timetable',
-            color: const Color(0xFF8B5CF6),
-            onTap: () => context.push(AppRoutes.timetable),
-            isDark: isDark,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _buildHubItem(
-            context,
-            icon: Icons.style_outlined,
-            title: 'Cards',
-            color: const Color(0xFF0D9488),
-            onTap: () => context.push(AppRoutes.flashcards),
-            isDark: isDark,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _buildHubItem(
-            context,
-            icon: Icons.grid_view_rounded,
-            title: 'All Tools',
-            color: const Color(0xFFF97316),
-            onTap: () => context.go(AppRoutes.more),
-            isDark: isDark,
-          ),
-        ),
-      ],
-    );
-  }
+  /// 5. Upcoming Exam: Nearest upcoming exam, or compact Add Exam prompt
+  Widget _buildUpcomingExam(
+    BuildContext context,
+    HomeDashboardData data,
+    Color cardBg,
+    Color borderColor,
+    Color textPrimary,
+    Color textMuted,
+    bool isDark,
+  ) {
+    // Find nearest future exam
+    final upcoming = data.upcomingExams.where((e) => !e.isCompleted && !e.isPast).toList()
+      ..sort((a, b) => a.examDate.compareTo(b.examDate));
 
-  Widget _buildHubItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required Color color,
-    required VoidCallback onTap,
-    required bool isDark,
-  }) {
-    return Material(
-      color: isDark ? AppColors.surfaceDark : Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isDark ? AppColors.borderDark : AppColors.borderLight,
-              width: 1,
-            ),
+    final ExamModel? nearest = upcoming.isNotEmpty ? upcoming.first : null;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const SizedBox(height: 6),
               Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                'Upcoming Exam',
                 style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                ),
+              ),
+              GestureDetector(
+                onTap: () => context.push(AppRoutes.exams),
+                child: Text(
+                  'View All',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: _secondaryColor,
+                  ),
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          if (nearest != null)
+            _buildNearestExamRow(context, nearest, textPrimary, textMuted, isDark)
+          else
+            _buildNoExamState(context, textMuted),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNearestExamRow(
+    BuildContext context,
+    ExamModel exam,
+    Color textPrimary,
+    Color textMuted,
+    bool isDark,
+  ) {
+    final now = DateTime.now();
+    final difference = exam.examDate.difference(DateTime(now.year, now.month, now.day)).inDays;
+    String countdown;
+    if (difference == 0) {
+      countdown = 'Today';
+    } else if (difference == 1) {
+      countdown = 'Tomorrow';
+    } else {
+      countdown = 'In $difference days';
+    }
+
+    return InkWell(
+      onTap: () => context.push(AppRoutes.exams),
+      borderRadius: BorderRadius.circular(8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: _secondaryColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.school_outlined,
+              color: _secondaryColor,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  exam.subject,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${exam.title.isNotEmpty ? '${exam.title} • ' : ''}${DateFormatter.formatDate(exam.examDate)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 11.5,
+                    color: textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: _secondaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              countdown,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: _secondaryColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoExamState(BuildContext context, Color textMuted) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(Icons.event_available_rounded, color: textMuted, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'No upcoming exams',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: textMuted,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => context.push(AppRoutes.addExam),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              '+ Add Exam',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: _secondaryColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingState(bool isDark) {
+    return const SingleChildScrollView(
+      padding: EdgeInsets.all(AppDimensions.space16),
+      child: Column(
+        children: [
+          LoadingSkeleton(width: double.infinity, height: 48),
+          SizedBox(height: 16),
+          LoadingSkeleton(width: double.infinity, height: 96),
+          SizedBox(height: 16),
+          LoadingSkeleton(width: double.infinity, height: 80),
+          SizedBox(height: 16),
+          LoadingSkeleton(width: double.infinity, height: 130),
+          SizedBox(height: 16),
+          LoadingSkeleton(width: double.infinity, height: 75),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(WidgetRef ref, Object err) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline_rounded, size: 44, color: Colors.redAccent),
+            const SizedBox(height: 12),
+            Text(
+              'Could not load dashboard: $err',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => ref.invalidate(homeDashboardProvider),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Retry'),
+            ),
+          ],
         ),
       ),
     );
