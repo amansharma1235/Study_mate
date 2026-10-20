@@ -29,6 +29,7 @@ class HomeScreen extends ConsumerWidget {
     final user = ref.watch(currentProfileProvider);
     final dashboardAsync = ref.watch(homeDashboardProvider);
     final notesState = ref.watch(notesControllerProvider);
+    final syncState = ref.watch(syncStateProvider);
 
     return Scaffold(
       backgroundColor: isDark
@@ -102,6 +103,36 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
         actions: [
+          IconButton(
+            icon: syncState.isSyncing
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
+                  )
+                : Icon(
+                    syncState.isCloudConnected
+                        ? Icons.cloud_done_rounded
+                        : Icons.cloud_off_rounded,
+                    color: syncState.isCloudConnected
+                        ? const Color(0xFF10B981)
+                        : Colors.grey,
+                    size: 22,
+                  ),
+            tooltip: syncState.isSyncing
+                ? 'Syncing with cloud...'
+                : (syncState.isCloudConnected
+                    ? 'Cloud Synced (Tap to refresh)'
+                    : 'Offline Mode (Tap to sync)'),
+            onPressed: () {
+              if (user != null && user.uid.isNotEmpty) {
+                ref.read(syncStateProvider.notifier).triggerSync(user.uid);
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.insights_rounded),
             tooltip: 'Statistics',

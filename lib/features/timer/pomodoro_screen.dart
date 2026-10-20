@@ -128,7 +128,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
           : AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text(
-          'Pomodoro Focus',
+          'Pomodoro',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
         actions: [
@@ -531,11 +531,15 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
                         children: [
                           Row(
                             children: [
-                              const Text(
-                                'Strict Anti-Distraction',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
+                              const Flexible(
+                                child: Text(
+                                  'Strict Focus Mode',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13.5,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 6),
@@ -553,7 +557,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen>
                                 child: Text(
                                   timerState.isStrictMode ? 'STRICT' : 'OFF',
                                   style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 9.5,
                                     fontWeight: FontWeight.w800,
                                     color: timerState.isStrictMode
                                         ? Colors.white
