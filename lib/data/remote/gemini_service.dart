@@ -41,7 +41,7 @@ class GeminiService {
   final HttpClient _client;
 
   GeminiService({HttpClient? client}) : _client = client ?? HttpClient() {
-    _client.connectionTimeout = const Duration(seconds: 25);
+    _client.connectionTimeout = const Duration(seconds: 45);
   }
 
   /// Sends an educational query (with optional image) to Google Gemini or Real-Time Online AI.
@@ -302,7 +302,7 @@ class GeminiService {
 
     final requestPayload = {
       'messages': messages,
-      'model': 'openai-fast',
+      'model': 'openai',
       'seed': 42,
     };
 
@@ -312,7 +312,7 @@ class GeminiService {
       request.add(utf8.encode(jsonEncode(requestPayload)));
 
       final response = await request.close().timeout(
-        const Duration(seconds: 30),
+        const Duration(seconds: 45),
         onTimeout: () {
           throw const NetworkException(
             'AI request timed out. Please check your internet connection.',
@@ -322,31 +322,33 @@ class GeminiService {
 
       final responseBody = await response.transform(utf8.decoder).join();
 
-      if (response.statusCode == 200 && responseBody.trim().isNotEmpty) {
+      if (response.statusCode == 200 &&
+          responseBody.trim().isNotEmpty &&
+          !responseBody.toLowerCase().contains('limit reached')) {
         return GeminiResponse(
           text: responseBody.trim(),
           isLiveOnline: true,
-          model: 'StudyMate Real AI (Live)',
+          model: 'ChatGPT / Open Reasoning AI',
         );
-      } else if (response.statusCode == 429 || response.statusCode == 402) {
-        // Fallback GET request to alternate endpoint
-        final fallbackUri = Uri.parse(
-          'https://text.pollinations.ai/${Uri.encodeComponent(prompt)}?model=openai-fast',
+      }
+
+      // If POST was rate-limited or failed, fallback to GET endpoint with model=openai
+      final fallbackUri = Uri.parse(
+        'https://text.pollinations.ai/${Uri.encodeComponent(prompt)}?model=openai&system=${Uri.encodeComponent(effectiveSystem)}',
+      );
+      final fallbackReq = await _client.getUrl(fallbackUri);
+      final fallbackRes = await fallbackReq.close().timeout(
+        const Duration(seconds: 45),
+      );
+      final fallbackBody = await fallbackRes.transform(utf8.decoder).join();
+      if (fallbackRes.statusCode == 200 &&
+          fallbackBody.trim().isNotEmpty &&
+          !fallbackBody.toLowerCase().contains('limit reached')) {
+        return GeminiResponse(
+          text: fallbackBody.trim(),
+          isLiveOnline: true,
+          model: 'ChatGPT / Open Reasoning AI',
         );
-        final fallbackReq = await _client.getUrl(fallbackUri);
-        final fallbackRes = await fallbackReq.close().timeout(
-          const Duration(seconds: 25),
-        );
-        final fallbackBody = await fallbackRes.transform(utf8.decoder).join();
-        if (fallbackRes.statusCode == 200 &&
-            fallbackBody.trim().isNotEmpty &&
-            !fallbackBody.toLowerCase().contains('limit reached')) {
-          return GeminiResponse(
-            text: fallbackBody.trim(),
-            isLiveOnline: true,
-            model: 'StudyMate Real AI (Live)',
-          );
-        }
       }
 
       throw ServerException(
