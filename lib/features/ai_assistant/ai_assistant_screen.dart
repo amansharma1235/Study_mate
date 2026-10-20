@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_dimensions.dart';
+import '../../core/errors/app_exception.dart';
 import '../../core/routing/route_names.dart';
 import '../../core/widgets/app_dialogs.dart';
 import '../../data/local/preference_service.dart';
@@ -332,88 +333,63 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
 
     _scrollToBottom();
 
-    if (_isConfigured && _userApiKey.isNotEmpty) {
-      // Live Google Gemini API Request
-      try {
-        final geminiService = ref.read(geminiServiceProvider);
-        final response = await geminiService.generateContent(
-          prompt: query,
-          apiKey: _userApiKey,
-          systemInstruction: _getSystemInstruction(_currentMode),
-          imageBytes: imageToSend,
-        );
+    try {
+      final geminiService = ref.read(geminiServiceProvider);
+      final response = await geminiService.generateContent(
+        prompt: query,
+        apiKey: _userApiKey,
+        systemInstruction: _getSystemInstruction(_currentMode),
+        imageBytes: imageToSend,
+      );
 
-        if (!mounted) return;
-        final modelTag = response.model != null
-            ? 'Gemini ${response.model}'
-            : 'Gemini Online';
-
-        setState(() {
-          _messages.add(
-            AiMessage(
-              text: response.text,
-              isUser: false,
-              isLiveAi: true,
-              templateTag: imageToSend != null
-                  ? '$modelTag Vision • Visual Solver'
-                  : '$modelTag • ${_getModeTitle(_currentMode)}',
-            ),
-          );
-          _isLoading = false;
-        });
-        _scrollToBottom();
-        if (_autoSpeakEnabled) {
-          _toggleSpeakMessage(response.text);
-        }
-      } catch (_) {
-        if (!mounted) return;
-        final offlineAnswer = _generateEducationalResponse(query, _currentMode);
-        final fullText = '''
-$offlineAnswer
-
----
-💡 *Using StudyMate Academic Knowledge Engine. To enable live online AI model responses, tap 🔑 in the top bar to update your Google AI Studio key.*
-''';
-        setState(() {
-          _messages.add(
-            AiMessage(
-              text: fullText,
-              isUser: false,
-              isError: false,
-              templateTag: 'StudyMate Academic Engine ⚡',
-            ),
-          );
-          _isLoading = false;
-        });
-        _scrollToBottom();
-        if (_autoSpeakEnabled) {
-          _toggleSpeakMessage(offlineAnswer);
-        }
-      }
-    } else {
-      // Offline Academic Knowledge Engine with explicit attribution
-      await Future.delayed(const Duration(milliseconds: 600));
       if (!mounted) return;
-      String reply = _generateEducationalResponse(query, _currentMode);
-      if (imageToSend != null) {
-        reply =
-            '📷 **Photo Captured for Analysis:**\n\nStudyMate has captured your study photo! To analyze handwritten questions, solve mathematical formulas from photos, and read textbook diagrams with Computer Vision, please activate your free Google Gemini API key by tapping the key 🔑 in the top right.\n\n---\n$reply';
-      }
+      final modelTag = response.model ?? (_isConfigured ? 'Gemini 2.0 Flash' : 'Live AI Tutor ⚡');
+
       setState(() {
         _messages.add(
           AiMessage(
-            text: reply,
+            text: response.text,
             isUser: false,
-            isLiveAi: false,
-            templateTag:
-                'Offline Academic Engine • ${_getModeTitle(_currentMode)}',
+            isLiveAi: true,
+            templateTag: imageToSend != null
+                ? '$modelTag • Visual Solver'
+                : '$modelTag • ${_getModeTitle(_currentMode)}',
           ),
         );
         _isLoading = false;
       });
       _scrollToBottom();
       if (_autoSpeakEnabled) {
-        _toggleSpeakMessage(reply);
+        _toggleSpeakMessage(response.text);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      final offlineAnswer = _generateEducationalResponse(query, _currentMode);
+      final isOfflineNet = e is NetworkException || e.toString().toLowerCase().contains('socket');
+      final notice = isOfflineNet
+          ? '📶 *Offline Notice: Device is currently disconnected from internet. Showing offline academic reference.*'
+          : '💡 *Live AI connection note: Showing offline study reference.*';
+
+      final fullText = '''
+$offlineAnswer
+
+---
+$notice
+''';
+      setState(() {
+        _messages.add(
+          AiMessage(
+            text: fullText,
+            isUser: false,
+            isError: false,
+            templateTag: 'Offline Academic Reference • ${_getModeTitle(_currentMode)}',
+          ),
+        );
+        _isLoading = false;
+      });
+      _scrollToBottom();
+      if (_autoSpeakEnabled) {
+        _toggleSpeakMessage(offlineAnswer);
       }
     }
   }
@@ -556,45 +532,51 @@ $offlineAnswer
       ),
       body: Column(
         children: [
-          // Offline Banner prompting user to enter key for live generative responses
-          if (!_isConfigured)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              color: AppColors.primary.withValues(alpha: 0.08),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.info_outline_rounded,
-                    size: 16,
-                    color: AppColors.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Running offline engine. Add your free Google Gemini API key for live generative answers.',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        color: isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight,
-                      ),
+          // Live AI Status Indicator Banner
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            color: _isConfigured
+                ? AppColors.success.withValues(alpha: 0.1)
+                : AppColors.primary.withValues(alpha: 0.08),
+            child: Row(
+              children: [
+                Icon(
+                  _isConfigured
+                      ? Icons.check_circle_rounded
+                      : Icons.auto_awesome_rounded,
+                  size: 16,
+                  color: _isConfigured ? AppColors.success : AppColors.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _isConfigured
+                        ? 'Google Gemini 2.0 Flash Connected (Vision & Speed Active)'
+                        : 'Real-Time AI Tutor Active • Ready to solve any question',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight,
                     ),
                   ),
-                  TextButton(
-                    onPressed: () => _showApiKeyDialog(context),
-                    child: const Text(
-                      'Setup Key',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
+                ),
+                TextButton(
+                  onPressed: () => _showApiKeyDialog(context),
+                  child: Text(
+                    _isConfigured ? 'Manage Key' : 'Gemini Key (Opt)',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: _isConfigured ? AppColors.success : AppColors.primary,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
 
           // Prompt Mode Chips
           Container(
@@ -1399,7 +1381,7 @@ $offlineAnswer
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Connect Google Gemini AI to enable live generative tutoring, answers to any question, code debugging, and revision advice.',
+                  'Real-Time AI is already active for all questions! Connect your personal Google Gemini API key to unlock Multimodal Vision (solving textbook photos & diagrams) and dedicated high-speed quotas.',
                   style: TextStyle(fontSize: 13, height: 1.4),
                 ),
                 const SizedBox(height: 12),
@@ -1416,7 +1398,7 @@ $offlineAnswer
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Get a free Gemini API key from Google AI Studio: https://aistudio.google.com/',
+                          'Get a free Gemini API key from Google AI Studio: https://aistudio.google.com/ (No credit card needed)',
                           style: TextStyle(fontSize: 12, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : const Color(0xFF333333)),
                         ),
                       ),
