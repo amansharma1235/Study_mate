@@ -8,6 +8,7 @@ import '../../core/constants/app_dimensions.dart';
 import '../../core/routing/route_names.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_text_field.dart';
+import '../../core/widgets/empty_state.dart';
 import '../../data/local/app_database.dart';
 import '../../data/models/document_model.dart';
 import '../auth/auth_controller.dart';
@@ -35,50 +36,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
     final user = ref.read(currentProfileProvider);
     final userId = user?.uid ?? 'guest';
     final db = ref.read(appDatabaseProvider);
-    var list = await db.getDocuments(userId);
-
-    if (list.isEmpty) {
-      // Seed default reference guides
-      final starterDocs = [
-        DocumentModel(
-          id: 'doc-1',
-          userId: userId,
-          title: 'Data Structures & Algorithms Cheat Sheet',
-          subject: 'Computer Science',
-          fileType: 'pdf',
-          filePath: '/storage/studymate/dsa_reference.pdf',
-          fileSizeBytes: 2450000,
-          pageCount: 14,
-          isBookmarked: true,
-        ),
-        DocumentModel(
-          id: 'doc-2',
-          userId: userId,
-          title: 'Calculus & Integration Comprehensive Handbook',
-          subject: 'Mathematics',
-          fileType: 'pdf',
-          filePath: '/storage/studymate/calculus_handbook.pdf',
-          fileSizeBytes: 1820000,
-          pageCount: 22,
-        ),
-        DocumentModel(
-          id: 'doc-3',
-          userId: userId,
-          title: 'Mechanics & Electromagnetism Constants Guide',
-          subject: 'Physics',
-          fileType: 'pdf',
-          filePath: '/storage/studymate/physics_constants.pdf',
-          fileSizeBytes: 980000,
-          pageCount: 8,
-          isBookmarked: true,
-        ),
-      ];
-
-      for (final d in starterDocs) {
-        await db.insertDocument(d);
-      }
-      list = starterDocs;
-    }
+    final list = await db.getDocuments(userId);
 
     if (mounted) {
       setState(() {
@@ -312,9 +270,15 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                 Expanded(
                   child: filtered.isEmpty
                       ? Center(
-                          child: Text(
-                            'No documents found',
-                            style: TextStyle(color: AppColors.textMutedLight),
+                          child: SingleChildScrollView(
+                            child: EmptyState(
+                              icon: Icons.description_outlined,
+                              title: 'No Documents Yet',
+                              description:
+                                  'Import textbooks, lecture slides, or past year question papers to read and generate summaries.',
+                              buttonText: 'Import PDF Document',
+                              onButtonPressed: () => _showImportDocumentDialog(context),
+                            ),
                           ),
                         )
                       : ListView.builder(

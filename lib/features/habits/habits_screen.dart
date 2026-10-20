@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_text_field.dart';
+import '../../core/widgets/empty_state.dart';
 import '../../data/local/app_database.dart';
 import '../../data/models/habit_model.dart';
 import '../../data/remote/firebase_service.dart';
@@ -50,47 +51,7 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
       }
     }
 
-    var list = await db.getHabits(userId);
-
-    if (list.isEmpty) {
-      final starterHabits = [
-        HabitModel(
-          id: 'h-1',
-          userId: userId,
-          title: 'Review 15 Spaced Repetition Flashcards',
-          description: 'Solidify memory through active recall',
-          colorHex: '#6258E8',
-          currentStreak: 4,
-          bestStreak: 7,
-          targetDaysPerWeek: 7,
-        ),
-        HabitModel(
-          id: 'h-2',
-          userId: userId,
-          title: 'Complete 2 Pomodoro Focus Sessions',
-          description: '50 minutes of deep uninterrupted study',
-          colorHex: '#10B981',
-          currentStreak: 2,
-          bestStreak: 5,
-          targetDaysPerWeek: 6,
-        ),
-        HabitModel(
-          id: 'h-3',
-          userId: userId,
-          title: 'Solve 1 Coding / Math Problem',
-          description: 'Keep analytical problem-solving sharp',
-          colorHex: '#F59E0B',
-          currentStreak: 5,
-          bestStreak: 12,
-          targetDaysPerWeek: 5,
-        ),
-      ];
-
-      for (final h in starterHabits) {
-        await db.insertHabit(h);
-      }
-      list = starterHabits;
-    }
+    final list = await db.getHabits(userId);
 
     if (mounted) {
       setState(() {
@@ -230,9 +191,15 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
                 Expanded(
                   child: _habits.isEmpty
                       ? Center(
-                          child: Text(
-                            'No habits added yet',
-                            style: TextStyle(color: AppColors.textMutedLight),
+                          child: SingleChildScrollView(
+                            child: EmptyState(
+                              icon: Icons.check_circle_outline_rounded,
+                              title: 'Build Daily Study Streaks',
+                              description:
+                                  'Add recurring daily study habits like reviewing flashcards, completing pomodoros, or reading textbook chapters.',
+                              buttonText: 'Create Your First Habit',
+                              onButtonPressed: () => _showAddHabitDialog(context),
+                            ),
                           ),
                         )
                       : ListView.builder(

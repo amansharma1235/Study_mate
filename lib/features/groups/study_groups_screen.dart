@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_text_field.dart';
+import '../../core/widgets/empty_state.dart';
 import '../../data/local/app_database.dart';
 import '../../data/models/study_group_model.dart';
 import '../auth/auth_controller.dart';
@@ -29,38 +30,7 @@ class _StudyGroupsScreenState extends ConsumerState<StudyGroupsScreen> {
 
   Future<void> _loadGroups() async {
     final db = ref.read(appDatabaseProvider);
-    var list = await db.getStudyGroups();
-
-    if (list.isEmpty) {
-      final starter = [
-        StudyGroupModel(
-          id: 'grp-1',
-          name: 'Computer Science Masters Group',
-          description: 'Collaborative problem solving on algorithms and distributed systems',
-          subject: 'Computer Science',
-          adminUserId: 'admin-1',
-          joinCode: 'CS-8921',
-          memberCount: 6,
-          sharedNotesCount: 12,
-        ),
-        StudyGroupModel(
-          id: 'grp-2',
-          name: 'Calculus & Engineering Math Squad',
-          description:
-              'Daily practice on differential equations and vector calculus',
-          subject: 'Mathematics',
-          adminUserId: 'admin-2',
-          joinCode: 'MATH-4410',
-          memberCount: 4,
-          sharedNotesCount: 8,
-        ),
-      ];
-
-      for (final g in starter) {
-        await db.insertStudyGroup(g);
-      }
-      list = starter;
-    }
+    final list = await db.getStudyGroups();
 
     if (mounted) {
       setState(() {
@@ -95,9 +65,15 @@ class _StudyGroupsScreenState extends ConsumerState<StudyGroupsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : _groups.isEmpty
           ? Center(
-              child: Text(
-                'No study groups joined yet',
-                style: TextStyle(color: AppColors.textMutedLight),
+              child: SingleChildScrollView(
+                child: EmptyState(
+                  icon: Icons.groups_outlined,
+                  title: 'No Study Groups Yet',
+                  description:
+                      'Join a collaborative study group using a 6-digit code or create a shared group with your classmates.',
+                  buttonText: 'Join with Code',
+                  onButtonPressed: () => _showJoinCodeDialog(context),
+                ),
               ),
             )
           : ListView.builder(

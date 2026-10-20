@@ -29,17 +29,15 @@ class _CgpaCalculatorScreenState extends State<CgpaCalculatorScreen> {
   String _gradingScale = '10-Point Scale'; // or '4.0 Scale'
   final List<CourseGradeItem> _courses = [
     CourseGradeItem(
-      name: 'Data Structures & Algorithms',
+      name: '',
       credits: 4,
-      gradePoint: 9,
+      gradePoint: 8,
     ),
     CourseGradeItem(
-      name: 'Database Management Systems',
+      name: '',
       credits: 3,
       gradePoint: 8,
     ),
-    CourseGradeItem(name: 'Operating Systems', credits: 4, gradePoint: 8.5),
-    CourseGradeItem(name: 'Mathematics III', credits: 4, gradePoint: 7.5),
   ];
 
   double get _totalCredits => _courses.fold(0, (sum, c) => sum + c.credits);

@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/app_text_field.dart';
+import '../../core/widgets/empty_state.dart';
 import '../../data/local/app_database.dart';
 import '../../data/models/career_model.dart';
 import '../auth/auth_controller.dart';
@@ -35,36 +36,6 @@ class _CareerScreenState extends ConsumerState<CareerScreen>
     final userId = user?.uid ?? 'guest';
     final db = ref.read(appDatabaseProvider);
     var list = await db.getJobApplications(userId);
-
-    if (list.isEmpty) {
-      final starter = [
-        JobApplicationModel(
-          id: 'job-1',
-          userId: userId,
-          company: 'Google',
-          role: 'Software Engineering Intern (Summer)',
-          status: 'Applied',
-          stipendOrSalary: 'Competitive',
-          location: 'Bangalore / Remote',
-          notes: 'Referral submitted. Focus on LeetCode Mediums and OS.',
-        ),
-        JobApplicationModel(
-          id: 'job-2',
-          userId: userId,
-          company: 'Microsoft',
-          role: 'Junior Mobile Application Developer',
-          status: 'Interviewing',
-          stipendOrSalary: '15 LPA',
-          location: 'Hyderabad',
-          notes: 'Round 1 technical scheduled next week. Review Flutter lifecycle.',
-        ),
-      ];
-
-      for (final j in starter) {
-        await db.insertJobApplication(j);
-      }
-      list = starter;
-    }
 
     if (mounted) {
       setState(() {
@@ -131,6 +102,21 @@ class _CareerScreenState extends ConsumerState<CareerScreen>
   }
 
   Widget _buildJobTrackerTab(bool isDark) {
+    if (_jobs.isEmpty) {
+      return Center(
+        child: SingleChildScrollView(
+          child: EmptyState(
+            icon: Icons.work_outline_rounded,
+            title: 'No Job Applications Yet',
+            description:
+                'Track your upcoming internships, job applications, deadlines, and interviews in one organized place.',
+            buttonText: 'Track Your First Job',
+            onButtonPressed: () => _showAddJobDialog(context),
+          ),
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(AppDimensions.space16),
       itemCount: _jobs.length,
