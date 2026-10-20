@@ -64,8 +64,8 @@ class HomeScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Compact Header
-                _buildHeader(data, textPrimary, textMuted),
+                // 1. Compact Header & Motivation
+                _buildHeader(data, textPrimary, textMuted, isDark),
                 const SizedBox(height: 16),
 
                 // 2. Today's Study Goal
@@ -196,31 +196,130 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// 1. Compact Header: Greeting and current date
-  Widget _buildHeader(HomeDashboardData data, Color textPrimary, Color textMuted) {
+  /// 1. Compact Header: Greeting, date & Daily Motivation
+  Widget _buildHeader(
+    HomeDashboardData data,
+    Color textPrimary,
+    Color textMuted,
+    bool isDark,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '${data.greeting}, ${data.userName}',
-          style: GoogleFonts.inter(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.3,
-            color: textPrimary,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${data.greeting}, ${data.userName} 👋',
+                    style: GoogleFonts.inter(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                      color: textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    DateFormatter.formatDate(DateTime.now()),
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (data.studyStreakDays > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.2 : 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.local_fire_department_rounded,
+                      color: Color(0xFFD97706),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${data.studyStreakDays}d streak',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: isDark ? const Color(0xFFFCD34D) : const Color(0xFFB45309),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
-        const SizedBox(height: 2),
-        Text(
-          DateFormatter.formatDate(DateTime.now()),
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: textMuted,
+        if (data.motivationalQuote.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: _primaryColor.withValues(alpha: isDark ? 0.12 : 0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _primaryColor.withValues(alpha: isDark ? 0.25 : 0.15),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.format_quote_rounded,
+                  color: _primaryColor,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'DAILY MOTIVATION',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                          color: _primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '“${data.motivationalQuote}”',
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          fontStyle: FontStyle.italic,
+                          fontWeight: FontWeight.w500,
+                          height: 1.35,
+                          color: textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

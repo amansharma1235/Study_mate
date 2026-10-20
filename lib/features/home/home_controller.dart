@@ -114,11 +114,13 @@ final homeDashboardProvider = FutureProvider<HomeDashboardData>((ref) async {
 
   // Dynamic motivational quotes
   final quotes = [
+    'Your future is created by what you do today, not tomorrow.',
     'Success is the sum of small efforts repeated day in and day out.',
-    'Focus on being productive instead of busy.',
+    'Push yourself, because no one else is going to do it for you.',
     'Discipline is choosing between what you want now and what you want most.',
-    'Small steps every day lead to massive results over time.',
     'Deep focus is your superpower in a world full of distractions.',
+    'Small daily improvements over time lead to stunning results.',
+    'The expert in anything was once a beginner. Keep going!',
   ];
   final quote = quotes[now.day % quotes.length];
 
