@@ -1,43 +1,64 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../local/app_database.dart';
 import '../local/notification_service.dart';
 import '../models/sync_status.dart';
 import '../models/task_model.dart';
 import '../remote/firebase_service.dart';
 
 final tasksRepositoryProvider = Provider<TasksRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
   final firebaseService = ref.watch(firebaseServiceProvider);
   final notificationService = ref.watch(notificationServiceProvider);
-  return TasksRepository(db, firebaseService, notificationService);
+  return TasksRepository(firebaseService, notificationService);
 });
 
+/// Pure Cloud-First Tasks Repository.
+/// All user tasks are synced directly to and from Cloud Firestore (users/{userId}/tasks).
+/// In-memory state is maintained temporarily during execution.
+/// No tasks are persisted locally in SQLite or local files.
 class TasksRepository {
-  final AppDatabase _db;
   final FirebaseService _firebaseService;
   final NotificationService _notificationService;
+  final Map<String, List<TaskModel>> _sessionCache = {};
 
-  TasksRepository(this._db, this._firebaseService, this._notificationService);
+  TasksRepository(this._firebaseService, this._notificationService);
 
   Future<List<TaskModel>> getTasks(String userId) async {
-    final localTasks = await _db.getTasks(userId);
+    if (userId.isEmpty) return [];
 
-    if (_firebaseService.isConfigured && userId.isNotEmpty) {
-      _syncFromRemote(userId).catchError((e) {
-        debugPrint('Tasks remote sync notice: $e');
-        return <TaskModel>[];
-      });
+    if (_firebaseService.isConfigured && userId != 'guest') {
+      try {
+        final col = _firebaseService.getUserCollection(userId, 'tasks');
+        if (col != null) {
+          final snapshot = await col.orderBy('dueDate', descending: false).get();
+          final tasks = snapshot.docs
+              .map((doc) => TaskModel.fromMap(doc.data()))
+              .toList();
+          _sessionCache[userId] = tasks;
+          return tasks;
+        }
+      } catch (e) {
+        debugPrint('Cloud tasks fetch notice: $e');
+        return _sessionCache[userId] ?? [];
+      }
     }
 
-    return localTasks;
+    return _sessionCache[userId] ?? [];
   }
 
   Future<void> saveTask(TaskModel task) async {
-    await _db.insertTask(task);
+    final taskWithSync = task.copyWith(syncStatus: SyncStatus.synced);
 
-    // Schedule local reminder if enabled and in the future
+    final list = _sessionCache[task.userId] ?? [];
+    final index = list.indexWhere((t) => t.id == task.id);
+    if (index >= 0) {
+      list[index] = taskWithSync;
+    } else {
+      list.add(taskWithSync);
+    }
+    _sessionCache[task.userId] = list;
+
+    // Ephemeral OS notification reminder
     if (task.reminderEnabled &&
         !task.isCompleted &&
         task.dueDate.isAfter(DateTime.now())) {
@@ -52,16 +73,10 @@ class TasksRepository {
       _notificationService.cancelNotification(task.id.hashCode.abs());
     }
 
-    if (_firebaseService.isConfigured && task.userId.isNotEmpty) {
-      try {
-        final col = _firebaseService.getUserCollection(task.userId, 'tasks');
-        if (col != null) {
-          await col.doc(task.id).set(task.toFirestoreMap());
-          await _db.updateTask(task.copyWith(syncStatus: SyncStatus.synced));
-        }
-      } catch (e) {
-        debugPrint('Firestore task upload warning: $e');
-        await _db.updateTask(task.copyWith(syncStatus: SyncStatus.pendingSync));
+    if (_firebaseService.isConfigured && task.userId.isNotEmpty && task.userId != 'guest') {
+      final col = _firebaseService.getUserCollection(task.userId, 'tasks');
+      if (col != null) {
+        await col.doc(task.id).set(taskWithSync.toFirestoreMap());
       }
     }
   }
@@ -75,33 +90,16 @@ class TasksRepository {
   }
 
   Future<void> deleteTask(String id, String userId) async {
-    await _db.deleteTask(id);
+    if (_sessionCache.containsKey(userId)) {
+      _sessionCache[userId]!.removeWhere((t) => t.id == id);
+    }
     _notificationService.cancelNotification(id.hashCode.abs());
 
-    if (_firebaseService.isConfigured && userId.isNotEmpty) {
-      try {
-        final col = _firebaseService.getUserCollection(userId, 'tasks');
-        if (col != null) {
-          await col.doc(id).delete();
-        }
-      } catch (e) {
-        debugPrint('Firestore task delete warning: $e');
+    if (_firebaseService.isConfigured && userId.isNotEmpty && userId != 'guest') {
+      final col = _firebaseService.getUserCollection(userId, 'tasks');
+      if (col != null) {
+        await col.doc(id).delete();
       }
     }
-  }
-
-  Future<List<TaskModel>> _syncFromRemote(String userId) async {
-    final col = _firebaseService.getUserCollection(userId, 'tasks');
-    if (col == null) return [];
-
-    final snapshot = await col.get();
-    final remoteTasks = snapshot.docs
-        .map((doc) => TaskModel.fromMap(doc.data()))
-        .toList();
-
-    for (final task in remoteTasks) {
-      await _db.insertTask(task.copyWith(syncStatus: SyncStatus.synced));
-    }
-    return remoteTasks;
   }
 }

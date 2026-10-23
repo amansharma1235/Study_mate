@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/routing/route_names.dart';
+import '../../core/utils/rate_limiter.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/app_button.dart';
 import '../../core/widgets/app_dialogs.dart';
@@ -35,11 +36,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final rateCheck = RateLimiter.instance.checkLimit(
+      'login_attempts',
+      maxAttempts: 5,
+      window: const Duration(minutes: 1),
+      customErrorMessage: 'Too many login attempts. Please wait 1 minute before trying again.',
+    );
+    if (!rateCheck.isAllowed) {
+      AppDialogs.showSnackBar(context, message: rateCheck.errorMessage!, isError: true);
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       await ref
           .read(authControllerProvider.notifier)
           .login(_emailController.text.trim(), _passwordController.text);
+      RateLimiter.instance.reset('login_attempts');
       if (!mounted) return;
       context.go(AppRoutes.home);
     } catch (e) {
@@ -50,19 +63,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  Future<void> _handleGoogleSignIn() async {
-    setState(() => _isLoading = true);
-    try {
-      await ref.read(authControllerProvider.notifier).signInWithGoogle();
-      if (!mounted) return;
-      context.go(AppRoutes.home);
-    } catch (e) {
-      if (!mounted) return;
-      AppDialogs.showSnackBar(context, message: e.toString(), isError: true);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -150,8 +150,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // Email
                   AppTextField(
-                    label: 'Email Address',
-                    hint: 'student@university.edu',
+                    label: 'Email / Gmail Address',
+                    hint: 'student@gmail.com',
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     prefixIcon: Icons.email_outlined,
@@ -195,101 +195,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     isLoading: _isLoading,
                     onPressed: _handleLogin,
                   ),
-                  const SizedBox(height: AppDimensions.space20),
-
-                  // "or" Divider
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: isDark
-                              ? AppColors.borderDark
-                              : AppColors.borderLight,
-                          thickness: 1,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        child: Text(
-                          'or',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: isDark
-                                ? AppColors.textMutedDark
-                                : AppColors.textMutedLight,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          color: isDark
-                              ? AppColors.borderDark
-                              : AppColors.borderLight,
-                          thickness: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppDimensions.space20),
-
-                  // Continue with Google Button
-                  InkWell(
-                    onTap: _isLoading ? null : _handleGoogleSignIn,
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusMedium,
-                    ),
-                    child: Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.surfaceDark
-                            : AppColors.surfaceLight,
-                        borderRadius: BorderRadius.circular(
-                          AppDimensions.radiusMedium,
-                        ),
-                        border: Border.all(
-                          color: isDark
-                              ? AppColors.borderDark
-                              : AppColors.borderLight,
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 22,
-                            height: 22,
-                            alignment: Alignment.center,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(0xFFEA4335),
-                            ),
-                            child: const Text(
-                              'G',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Continue with Google',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: isDark
-                                  ? AppColors.textPrimaryDark
-                                  : AppColors.textPrimaryLight,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppDimensions.space24),
+                  const SizedBox(height: AppDimensions.space28),
 
                   // Register link
                   Row(

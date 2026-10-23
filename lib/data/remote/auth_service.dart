@@ -34,14 +34,8 @@ class AuthService {
         if (user == null) {
           yield null;
         } else {
-          yield UserProfileModel(
-            uid: user.uid,
-            email: user.email ?? '',
-            displayName: user.displayName ?? 'Student',
-            photoUrl: user.photoURL,
-            createdAt: user.metadata.creationTime ?? DateTime.now(),
-            updatedAt: DateTime.now(),
-          );
+          final profile = await getCurrentUser();
+          yield profile;
         }
       }
     } else {
@@ -66,7 +60,24 @@ class AuthService {
       if (user != null) {
         String displayName = user.displayName ?? '';
         String? photoUrl = user.photoURL;
-        int dailyGoal = 120;
+        int dailyGoal = 0;
+
+        // Read locally saved session so custom avatar/photo is preserved
+        final storedJson = await _secureStorage.read(key: _keySessionUser);
+        if (storedJson != null) {
+          try {
+            final stored = UserProfileModel.fromMap(jsonDecode(storedJson));
+            if (stored.uid == user.uid) {
+              if (stored.photoUrl?.isNotEmpty == true) {
+                photoUrl = stored.photoUrl;
+              }
+              if (stored.displayName.isNotEmpty) {
+                displayName = stored.displayName;
+              }
+              dailyGoal = stored.dailyGoalMinutes;
+            }
+          } catch (_) {}
+        }
 
         if (_firebaseService.firestore != null) {
           try {
@@ -255,7 +266,7 @@ class AuthService {
 
           String displayName = user.displayName ?? '';
           String? photoUrl = user.photoURL;
-          int dailyGoal = 120;
+          int dailyGoal = 0;
 
           if (_firebaseService.firestore != null) {
             try {
@@ -374,7 +385,7 @@ class AuthService {
         String displayName =
             user.displayName ?? googleUser.displayName ?? 'Student';
         String? photoUrl = user.photoURL ?? googleUser.photoUrl;
-        int dailyGoal = 120;
+        int dailyGoal = 0;
 
         if (_firebaseService.firestore != null) {
           try {
@@ -507,8 +518,21 @@ class AuthService {
       if (isFirebaseActive) {
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
-          await user.updateDisplayName(displayName);
-          if (photoUrl != null) await user.updatePhotoURL(photoUrl);
+          try {
+            await user.updateDisplayName(displayName);
+          } catch (e) {
+            debugPrint('Warning: Firebase updateDisplayName: $e');
+          }
+
+          // Only attempt updatePhotoURL if it is a valid HTTP/HTTPS web URL
+          if (photoUrl != null &&
+              (photoUrl.startsWith('http://') || photoUrl.startsWith('https://'))) {
+            try {
+              await user.updatePhotoURL(photoUrl);
+            } catch (e) {
+              debugPrint('Warning: Firebase updatePhotoURL: $e');
+            }
+          }
 
           if (_firebaseService.firestore != null) {
             try {
@@ -530,13 +554,22 @@ class AuthService {
         }
       }
 
-      final currentUser = await getCurrentUser();
-      final updated = (currentUser ??
+      // Read existing local profile or build fallback
+      UserProfileModel? existing;
+      final storedJson = await _secureStorage.read(key: _keySessionUser);
+      if (storedJson != null) {
+        try {
+          existing = UserProfileModel.fromMap(jsonDecode(storedJson));
+        } catch (_) {}
+      }
+
+      final fbUser = isFirebaseActive ? FirebaseAuth.instance.currentUser : null;
+      final updated = (existing ??
               UserProfileModel(
-                uid: 'local_student',
-                email: '',
+                uid: fbUser?.uid ?? 'local_student',
+                email: fbUser?.email ?? '',
                 displayName: displayName.isNotEmpty ? displayName : 'Student',
-                createdAt: DateTime.now(),
+                createdAt: fbUser?.metadata.creationTime ?? DateTime.now(),
                 updatedAt: DateTime.now(),
               ))
           .copyWith(
@@ -545,6 +578,7 @@ class AuthService {
         dailyGoalMinutes: dailyGoalMinutes,
         updatedAt: DateTime.now(),
       );
+
       await _secureStorage.write(
         key: _keySessionUser,
         value: jsonEncode(updated.toMap()),
@@ -568,6 +602,46 @@ class AuthService {
     }
   }
 
+  Future<void> _deleteCloudUserData(String userId) async {
+    if (_firebaseService.firestore == null ||
+        userId.isEmpty ||
+        userId == 'guest') {
+      return;
+    }
+    try {
+      final userDoc =
+          _firebaseService.firestore!.collection('users').doc(userId);
+      const subcollections = [
+        'notes',
+        'tasks',
+        'timetable',
+        'exams',
+        'pomodoro_sessions',
+        'quiz_attempts',
+        'saved_tips',
+        'habits',
+        'flashcard_decks',
+        'flashcards',
+        'study_sessions',
+        'stats',
+      ];
+      for (final sub in subcollections) {
+        try {
+          final snap = await userDoc.collection(sub).get();
+          for (final doc in snap.docs) {
+            await doc.reference.delete();
+          }
+        } catch (e) {
+          debugPrint('Notice clearing subcollection $sub: $e');
+        }
+      }
+      await userDoc.delete();
+      debugPrint('Cloud data completely cleared for user: $userId');
+    } catch (e) {
+      debugPrint('Notice deleting cloud data: $e');
+    }
+  }
+
   Future<void> deleteAccount({required String password}) async {
     try {
       if (isFirebaseActive) {
@@ -578,6 +652,7 @@ class AuthService {
             password: password,
           );
           await user.reauthenticateWithCredential(credential);
+          await _deleteCloudUserData(user.uid);
           await user.delete();
         }
       } else {

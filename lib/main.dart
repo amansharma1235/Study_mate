@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
 import 'core/constants/app_colors.dart';
 import 'data/local/db_initializer.dart';
+import 'core/services/analytics_service.dart';
+import 'core/services/error_tracking_service.dart';
 import 'data/local/notification_service.dart';
 import 'data/local/preference_service.dart';
 import 'data/remote/firebase_service.dart';
@@ -14,17 +14,8 @@ import 'data/remote/firebase_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Catch unhandled Flutter framework errors
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
-    debugPrint('StudyMate Flutter Framework Error: ${details.exceptionAsString()}');
-  };
-
-  // Catch unhandled async errors
-  PlatformDispatcher.instance.onError = (error, stack) {
-    debugPrint('StudyMate Async Error: $error');
-    return true; // Handled
-  };
+  // Initialize centralized error tracking service
+  ErrorTrackingService.instance.init();
 
   // Production-grade graceful Error Widget instead of red/yellow screen
   ErrorWidget.builder = (FlutterErrorDetails details) {
@@ -60,6 +51,9 @@ Future<void> main() async {
 
   // Initialize SharedPreferences
   final sharedPreferences = await SharedPreferences.getInstance();
+
+  // Initialize analytics telemetry
+  await AnalyticsService.instance.init(sharedPreferences);
 
   // Initialize local notifications service
   await NotificationService.instance.init();

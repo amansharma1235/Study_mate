@@ -68,10 +68,21 @@ class PreferenceService {
   Future<void> setHasSeenNewOnboarding(bool seen) =>
       _prefs.setBool(_keyNewOnboardingSeen, seen);
 
-  // Daily Goal
-  int getDailyGoalMinutes() => _prefs.getInt(_keyDailyGoalMinutes) ?? 120;
-  Future<void> setDailyGoalMinutes(int mins) =>
-      _prefs.setInt(_keyDailyGoalMinutes, mins);
+  // Daily Goal (defaults to 0 for new users who have not set a goal yet)
+  int getDailyGoalMinutes([String? userId]) {
+    if (userId != null && userId.isNotEmpty && userId != 'guest') {
+      final userVal = _prefs.getInt('${_keyDailyGoalMinutes}_$userId');
+      if (userVal != null) return userVal;
+    }
+    return _prefs.getInt(_keyDailyGoalMinutes) ?? 0;
+  }
+
+  Future<void> setDailyGoalMinutes(int mins, [String? userId]) async {
+    if (userId != null && userId.isNotEmpty && userId != 'guest') {
+      await _prefs.setInt('${_keyDailyGoalMinutes}_$userId', mins);
+    }
+    await _prefs.setInt(_keyDailyGoalMinutes, mins);
+  }
 
   // Pomodoro Settings
   int getPomodoroFocusMinutes() =>

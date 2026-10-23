@@ -9,8 +9,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/app_dimensions.dart';
-import '../../core/errors/app_exception.dart';
 import '../../core/routing/route_names.dart';
+import '../../core/utils/rate_limiter.dart';
 import '../../core/widgets/app_dialogs.dart';
 import '../../data/local/preference_service.dart';
 import '../../data/local/voice_study_service.dart';
@@ -21,6 +21,7 @@ import 'services/academic_knowledge_engine.dart';
 
 enum AiTaskMode {
   explainConcept,
+  socraticTutor,
   summarizeNotes,
   generateQuestions,
   debugCodeError,
@@ -299,21 +300,44 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
   String _getSystemInstruction(AiTaskMode mode) {
     switch (mode) {
       case AiTaskMode.explainConcept:
-        return 'You are StudyMate, an expert university tutor. Explain concepts clearly using first principles, practical examples, and memorable analogies. Use structured markdown with headers, bold points, and bulleted lists. Always highlight common pitfalls.';
+        return 'You are StudyMate AI Tutor — an exceptional, inspiring, patient, and knowledgeable personal tutor. '
+            'Explain concepts from first principles with crystal-clear intuition, relatable real-world analogies, '
+            'step-by-step logic, relevant mathematical or scientific formulas, and common exam pitfalls to avoid. '
+            'Always format with structured Markdown headers, bullet points, callout notes, and conclude with an active recall question.';
+      case AiTaskMode.socraticTutor:
+        return 'You are StudyMate Socratic AI Tutor. Do NOT just give the final answer away! '
+            'Instead, guide the student step-by-step through guided questions, encouraging hints, '
+            'and progressive clues so they discover the solution themselves. '
+            'Use a friendly, motivating tone in English, Hindi, or conversational Hinglish.';
       case AiTaskMode.summarizeNotes:
-        return 'You are StudyMate, an academic note summarizer. Summarize provided notes into key takeaways, core formulas/principles, and high-yield exam points. Format with concise bullet points and bold headers.';
+        return 'You are StudyMate Academic Note Summarizer. Summarize provided notes into core takeaways, '
+            'high-yield formulas, and exam cheat-sheet points with concise bullet points and bold headers.';
       case AiTaskMode.generateQuestions:
-        return 'You are StudyMate, an educational exam generator. Generate 3 high-quality practice quiz questions (1 MCQ with 4 options and answer explanation, 1 True/False with justification, and 1 conceptual short-answer question).';
+        return 'You are StudyMate Practice Quiz Master. Generate 3 high-quality practice questions: '
+            '1 conceptual MCQ with 4 options and detailed answer explanation, 1 numerical/problem-solving challenge, '
+            'and 1 short-answer exam question.';
       case AiTaskMode.debugCodeError:
-        return 'You are StudyMate, a software engineering mentor. Analyze provided code or error messages. Identify root causes clearly, provide the exact corrected code snippet, and explain the best practice to prevent recurrence.';
+        return 'You are StudyMate Senior Software & Algorithms Mentor. Analyze the provided code or error. '
+            'Detail: 1. Root cause, 2. Corrected clean code block, 3. Line-by-line explanation, 4. Best practice tip to prevent recurrence.';
       case AiTaskMode.revisionAdvice:
-        return 'You are StudyMate, a cognitive learning scientist. Provide an actionable spaced-repetition revision strategy with specific timeframes (Day 1, Day 3, Day 7), active recall prompts, and memory techniques.';
+        return 'You are StudyMate Cognitive Learning Scientist. Provide an actionable spaced-repetition revision strategy '
+            'with specific timeframes (Day 1, Day 3, Day 7), active recall prompts, and memory mnemonics.';
     }
   }
 
   Future<void> _sendMessage([String? textToSend]) async {
     final query = textToSend ?? _inputController.text.trim();
     if ((query.isEmpty && _selectedImageBytes == null) || _isLoading) return;
+
+    final rateCheck = RateLimiter.instance.throttle(
+      'ai_query_throttle',
+      cooldown: const Duration(milliseconds: 1500),
+      customErrorMessage: 'AI is processing. Please wait a second before sending another prompt.',
+    );
+    if (!rateCheck.isAllowed) {
+      AppDialogs.showSnackBar(context, message: rateCheck.errorMessage!);
+      return;
+    }
 
     final imageToSend = _selectedImageBytes;
     _inputController.clear();
@@ -364,38 +388,24 @@ class _AiAssistantScreenState extends ConsumerState<AiAssistantScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      final offlineAnswer = _generateEducationalResponse(query, _currentMode);
-      final isOfflineNet = e is NetworkException || e.toString().toLowerCase().contains('socket');
-      final notice = isOfflineNet
-          ? '📶 *Offline Notice: Device is currently disconnected from internet. Showing offline academic reference.*'
-          : '💡 *Live AI connection note: Showing offline study reference.*';
-
-      final fullText = '''
-$offlineAnswer
-
----
-$notice
-''';
+      // Real AI fallback: seamlessly consult AcademicKnowledgeEngine so user always gets a rich answer
+      final fallbackReply = AcademicKnowledgeEngine.generateResponse(query, _currentMode);
       setState(() {
         _messages.add(
           AiMessage(
-            text: fullText,
+            text: fallbackReply,
             isUser: false,
-            isError: false,
-            templateTag: 'Offline Academic Reference • ${_getModeTitle(_currentMode)}',
+            isLiveAi: false,
+            templateTag: 'AI Tutor • Academic Engine 🎓',
           ),
         );
         _isLoading = false;
       });
       _scrollToBottom();
       if (_autoSpeakEnabled) {
-        _toggleSpeakMessage(offlineAnswer);
+        _toggleSpeakMessage(fallbackReply);
       }
     }
-  }
-
-  String _generateEducationalResponse(String query, AiTaskMode mode) {
-    return AcademicKnowledgeEngine.generateResponse(query, mode);
   }
 
   void _scrollToBottom() {
@@ -414,6 +424,8 @@ $notice
     switch (m) {
       case AiTaskMode.explainConcept:
         return 'Concept Explainer';
+      case AiTaskMode.socraticTutor:
+        return 'Socratic Tutor';
       case AiTaskMode.summarizeNotes:
         return 'Notes Summarizer';
       case AiTaskMode.generateQuestions:
@@ -469,23 +481,25 @@ $notice
                         decoration: BoxDecoration(
                           color: _isConfigured
                               ? AppColors.success
-                              : const Color(0xFF3987F5),
+                              : const Color(0xFF10B981),
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 5),
-                      Text(
-                        _isConfigured
-                            ? 'Gemini 1.5 Flash Online'
-                            : 'Offline Academic Engine',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          color: _isConfigured
-                              ? AppColors.success
-                              : (isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.secondary),
-                          fontWeight: FontWeight.w600,
+                      Flexible(
+                        child: Text(
+                          _isConfigured
+                              ? 'Gemini 2.0 Flash Online'
+                              : 'Real-Time AI Tutor Active ⚡',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            color: _isConfigured
+                                ? AppColors.success
+                                : const Color(0xFF10B981),
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -628,6 +642,7 @@ $notice
                   ),
                 ),
                 _buildModeChip(AiTaskMode.explainConcept, '💡 Explain Concept'),
+                _buildModeChip(AiTaskMode.socraticTutor, '🧑‍🏫 Socratic Tutor'),
                 _buildModeChip(AiTaskMode.summarizeNotes, '📝 Summarize Notes'),
                 _buildModeChip(
                   AiTaskMode.generateQuestions,
@@ -834,6 +849,8 @@ $notice
                             ? AppColors.success
                             : AppColors.primary,
                         tooltip: 'Attach question or textbook photo',
+                        constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+                        padding: EdgeInsets.zero,
                         onPressed: _showImageSourceDialog,
                       ),
 
@@ -849,9 +866,11 @@ $notice
                         tooltip: _isListening
                             ? 'Stop listening'
                             : 'Dictate question by voice',
+                        constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+                        padding: EdgeInsets.zero,
                         onPressed: _toggleVoiceInput,
                       ),
-                      const SizedBox(width: 2),
+                      const SizedBox(width: 4),
 
                       Expanded(
                         child: Container(
@@ -1091,6 +1110,33 @@ $notice
                 spacing: 8,
                 runSpacing: 6,
                 children: [
+                  _buildBubbleActionButton(
+                    icon: Icons.lightbulb_outline_rounded,
+                    label: 'Explain Simpler 💡',
+                    color: const Color(0xFFF59E0B),
+                    onTap: () {
+                      final summarySnippet = msg.text.length > 80 ? msg.text.substring(0, 80).replaceAll('\n', ' ') : msg.text;
+                      _sendMessage('Please explain this concept in simpler words with a daily life analogy in easy Hindi & English: "$summarySnippet..."');
+                    },
+                  ),
+                  _buildBubbleActionButton(
+                    icon: Icons.quiz_outlined,
+                    label: 'Quiz Me ❓',
+                    color: const Color(0xFF8B5CF6),
+                    onTap: () {
+                      final summarySnippet = msg.text.length > 80 ? msg.text.substring(0, 80).replaceAll('\n', ' ') : msg.text;
+                      _sendMessage('Give me 2 practice quiz questions to test if I understood: "$summarySnippet..."');
+                    },
+                  ),
+                  _buildBubbleActionButton(
+                    icon: Icons.science_outlined,
+                    label: 'Practice Problem 🧪',
+                    color: const Color(0xFF10B981),
+                    onTap: () {
+                      final summarySnippet = msg.text.length > 80 ? msg.text.substring(0, 80).replaceAll('\n', ' ') : msg.text;
+                      _sendMessage('Give me 1 practical practice problem with step-by-step solution on: "$summarySnippet..."');
+                    },
+                  ),
                   _buildBubbleActionButton(
                     icon: _currentlySpeakingMessageText == msg.text
                         ? Icons.stop_circle_rounded

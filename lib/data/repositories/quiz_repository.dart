@@ -1,25 +1,27 @@
 import 'dart:convert';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../local/app_database.dart';
 import '../models/quiz_model.dart';
-
 import '../remote/firebase_service.dart';
 
 final quizRepositoryProvider = Provider<QuizRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
   final firebaseService = ref.watch(firebaseServiceProvider);
-  return QuizRepository(db, firebaseService: firebaseService);
+  return QuizRepository(firebaseService: firebaseService);
 });
 
+/// Pure Cloud-First Quiz Repository.
+/// Question bank is bundled as read-only application asset (Section 6.G).
+/// Quiz attempt history is stored in Cloud Firestore (users/{userId}/quiz_attempts).
+/// In-memory state is maintained temporarily during execution.
+/// No quiz attempts are persisted locally in SQLite or local files.
 class QuizRepository {
-  final AppDatabase _db;
   final FirebaseService? firebaseService;
   List<QuizQuestion>? _cachedQuestions;
+  final Map<String, List<QuizAttempt>> _sessionAttempts = {};
 
-  QuizRepository(this._db, {this.firebaseService});
+  QuizRepository({this.firebaseService});
 
   Future<List<QuizQuestion>> getAllQuestions() async {
     if (_cachedQuestions != null) return _cachedQuestions!;
@@ -49,47 +51,49 @@ class QuizRepository {
   }
 
   Future<void> saveAttempt(QuizAttempt attempt) async {
-    await _db.insertQuizAttempt(attempt);
+    final list = _sessionAttempts[attempt.userId] ?? [];
+    list.insert(0, attempt);
+    _sessionAttempts[attempt.userId] = list;
 
     final fb = firebaseService;
-    if (fb != null && fb.isConfigured && attempt.userId.isNotEmpty) {
+    if (fb != null &&
+        fb.isConfigured &&
+        attempt.userId.isNotEmpty &&
+        attempt.userId != 'guest') {
       try {
-        final col = fb.getUserCollection(
-          attempt.userId,
-          'quiz_attempts',
-        );
+        final col = fb.getUserCollection(attempt.userId, 'quiz_attempts');
         if (col != null) {
           await col.doc(attempt.id).set(attempt.toMap());
         }
       } catch (e) {
-        // Soft fallback
+        debugPrint('Cloud quiz attempt record notice: $e');
       }
     }
   }
 
   Future<List<QuizAttempt>> getAttempts(String userId) async {
-    final localAttempts = await _db.getQuizAttempts(userId);
+    if (userId.isEmpty) return [];
 
     final fb = firebaseService;
-    if (fb != null && fb.isConfigured && userId.isNotEmpty) {
-      _syncFromRemote(userId).catchError((_) => <QuizAttempt>[]);
+    if (fb != null && fb.isConfigured && userId != 'guest') {
+      try {
+        final col = fb.getUserCollection(userId, 'quiz_attempts');
+        if (col != null) {
+          final snap = await col.orderBy('completedAt', descending: true).get();
+          final attempts = snap.docs
+              .map((doc) => QuizAttempt.fromMap(doc.data()))
+              .toList();
+          _sessionAttempts[userId] = attempts;
+          return attempts;
+        }
+      } catch (e) {
+        debugPrint('Cloud quiz attempts fetch notice: $e');
+        if (_sessionAttempts.containsKey(userId)) {
+          return _sessionAttempts[userId]!;
+        }
+      }
     }
 
-    return localAttempts;
-  }
-
-  Future<List<QuizAttempt>> _syncFromRemote(String userId) async {
-    final col = firebaseService?.getUserCollection(userId, 'quiz_attempts');
-    if (col == null) return [];
-
-    final snap = await col.get();
-    final remoteAttempts = snap.docs
-        .map((doc) => QuizAttempt.fromMap(doc.data()))
-        .toList();
-
-    for (final attempt in remoteAttempts) {
-      await _db.insertQuizAttempt(attempt);
-    }
-    return remoteAttempts;
+    return _sessionAttempts[userId] ?? [];
   }
 }

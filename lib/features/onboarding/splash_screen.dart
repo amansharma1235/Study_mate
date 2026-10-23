@@ -67,14 +67,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         }
       }
 
-      if (!onboardingDone) {
-        context.go(AppRoutes.onboarding);
-      } else if (user != null) {
+      if (user != null) {
         if (prefs.isAppLockEnabled() && prefs.getAppLockPin().isNotEmpty) {
           context.go(AppRoutes.securityLock, extra: true);
         } else {
           context.go(AppRoutes.home);
         }
+      } else if (!onboardingDone) {
+        context.go(AppRoutes.onboarding);
       } else {
         context.go(AppRoutes.login);
       }

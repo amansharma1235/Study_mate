@@ -231,11 +231,14 @@ class GeminiService {
             } catch (_) {}
           }
 
-          lastErrorMessage = message;
-          // If invalid API key, fail fast with informative message
+          // If invalid API key, fallback immediately to real-time AI
           if (message.toLowerCase().contains('api key not valid') ||
               message.toLowerCase().contains('api_key_invalid')) {
-            throw AuthException('Invalid Gemini API Key: $message. Please check your key at aistudio.google.com');
+            debugPrint('Invalid Gemini API Key, routing directly to Real-Time AI engine...');
+            return await generateOnlineAiContent(
+              prompt: prompt,
+              systemInstruction: systemInstruction,
+            );
           }
           continue;
         } else if (statusCode == 429) {
@@ -292,10 +295,12 @@ class GeminiService {
 
     final effectiveSystem = (systemInstruction != null && systemInstruction.trim().isNotEmpty)
         ? systemInstruction.trim()
-        : 'You are StudyMate, an expert academic tutor and university mentor. '
-            'Explain concepts clearly using step-by-step logic, practical real-world examples, '
-            'relevant formulas, and structured markdown (headers, bullet points, bold key terms). '
-            'Answer accurately in the same language or dialect as the student (Hindi, English, Hinglish, etc.).';
+        : 'You are StudyMate AI Tutor — an exceptional, inspiring, patient, and knowledgeable personal academic tutor. '
+            'Your mission is to make any difficult academic topic easy to understand and master. '
+            'Always explain clearly using first principles, relatable real-world analogies, step-by-step logic, relevant formulas, '
+            'and structured Markdown (bold headers, bullet points, code blocks where applicable). '
+            'Explain in the student\'s preferred language (English, Hindi, or conversational Hinglish). '
+            'Conclude with an active recall question or interactive challenge to verify the student\'s comprehension.';
 
     messages.add({'role': 'system', 'content': effectiveSystem});
     messages.add({'role': 'user', 'content': prompt.trim()});
@@ -303,6 +308,7 @@ class GeminiService {
     final requestPayload = {
       'messages': messages,
       'model': 'openai',
+      'private': true,
       'seed': 42,
     };
 

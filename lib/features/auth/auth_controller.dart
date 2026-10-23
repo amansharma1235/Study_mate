@@ -12,6 +12,11 @@ import '../syllabus/syllabus_controller.dart';
 import '../tasks/tasks_controller.dart';
 import '../timetable/timetable_controller.dart';
 import '../timer/pomodoro_controller.dart';
+import '../../data/repositories/exams_repository.dart';
+import '../../data/repositories/notes_repository.dart';
+import '../../data/repositories/tasks_repository.dart';
+import '../../data/repositories/timer_repository.dart';
+import '../../data/repositories/timetable_repository.dart';
 import '../timer/timer_history_screen.dart';
 
 final authStateProvider = StreamProvider<UserProfileModel?>((ref) {
@@ -19,7 +24,14 @@ final authStateProvider = StreamProvider<UserProfileModel?>((ref) {
   return authService.authStateChanges();
 });
 
-final currentProfileProvider = StateProvider<UserProfileModel?>((ref) => null);
+final currentProfileProvider = StateProvider<UserProfileModel?>((ref) {
+  ref.listen<AsyncValue<UserProfileModel?>>(authStateProvider, (prev, next) {
+    next.whenData((user) {
+      ref.controller.state = user;
+    });
+  });
+  return null;
+});
 
 final authControllerProvider =
     StateNotifierProvider<AuthController, AsyncValue<UserProfileModel?>>((ref) {
@@ -49,6 +61,11 @@ class AuthController extends StateNotifier<AsyncValue<UserProfileModel?>> {
     _ref.invalidate(plannerControllerProvider);
     _ref.invalidate(studyHistoryProvider);
     _ref.invalidate(pomodoroControllerProvider);
+    _ref.invalidate(timerRepositoryProvider);
+    _ref.invalidate(tasksRepositoryProvider);
+    _ref.invalidate(notesRepositoryProvider);
+    _ref.invalidate(examsRepositoryProvider);
+    _ref.invalidate(timetableRepositoryProvider);
   }
 
   Future<void> _init() async {
@@ -127,6 +144,7 @@ class AuthController extends StateNotifier<AsyncValue<UserProfileModel?>> {
     final user = await _authService.getCurrentUser();
     state = AsyncValue.data(user);
     _ref.read(currentProfileProvider.notifier).state = user;
+    _ref.invalidate(homeDashboardProvider);
   }
 
   Future<void> logout() async {

@@ -211,10 +211,9 @@ class _StudyGardenScreenState extends ConsumerState<StudyGardenScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : const Color(0xFFF1F5F9),
       appBar: AppBar(
-        title: const Row(
-          children: [
-            Text('Virtual Study Garden 🌲', style: TextStyle(fontWeight: FontWeight.w800)),
-          ],
+        title: const Text(
+          'Study Garden 🌲',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
         ),
         actions: [
           // Coins balance chip

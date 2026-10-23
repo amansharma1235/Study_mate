@@ -65,24 +65,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
   }
 
-  Future<void> _handleGoogleSignUp() async {
-    setState(() => _isLoading = true);
-    try {
-      await ref.read(authControllerProvider.notifier).signInWithGoogle();
-      if (!mounted) return;
-      AppDialogs.showSnackBar(
-        context,
-        message: 'Welcome to StudyMate!',
-        isSuccess: true,
-      );
-      context.go(AppRoutes.home);
-    } catch (e) {
-      if (!mounted) return;
-      AppDialogs.showSnackBar(context, message: e.toString(), isError: true);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -187,8 +169,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                 // Email
                 AppTextField(
-                  label: 'Email Address',
-                  hint: 'alex@university.edu',
+                  label: 'Email / Gmail Address',
+                  hint: 'alex@gmail.com',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.email_outlined,
@@ -239,99 +221,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   isLoading: _isLoading,
                   onPressed: _handleRegister,
                 ),
-                const SizedBox(height: AppDimensions.space20),
-
-                // "or" Divider
-                Row(
-                  children: [
-                    Expanded(
-                      child: Divider(
-                        color: isDark
-                            ? AppColors.borderDark
-                            : AppColors.borderLight,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: Text(
-                        'or',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: isDark
-                              ? AppColors.textMutedDark
-                              : AppColors.textMutedLight,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Divider(
-                        color: isDark
-                            ? AppColors.borderDark
-                            : AppColors.borderLight,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppDimensions.space20),
-
-                // Continue with Google Button
-                InkWell(
-                  onTap: _isLoading ? null : _handleGoogleSignUp,
-                  borderRadius: BorderRadius.circular(
-                    AppDimensions.radiusMedium,
-                  ),
-                  child: Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.surfaceDark
-                          : AppColors.surfaceLight,
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusMedium,
-                      ),
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.borderDark
-                            : AppColors.borderLight,
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 22,
-                          height: 22,
-                          alignment: Alignment.center,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Color(0xFFEA4335),
-                          ),
-                          child: const Text(
-                            'G',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Continue with Google',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.space24),
+                const SizedBox(height: AppDimensions.space28),
 
                 // Sign in link
                 Row(

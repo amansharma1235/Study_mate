@@ -8,6 +8,7 @@ import '../../core/constants/app_dimensions.dart';
 import '../../core/routing/route_names.dart';
 import '../../core/widgets/app_button.dart';
 import '../../data/local/preference_service.dart';
+import '../../data/remote/auth_service.dart';
 import '../auth/auth_controller.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -47,7 +48,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     await prefs.setOnboardingDone(true);
     if (!mounted) return;
 
-    final user = ref.read(currentProfileProvider);
+    final user = ref.read(currentProfileProvider) ??
+        await ref.read(authServiceProvider).getCurrentUser();
+    if (!mounted) return;
     if (user != null) {
       context.go(AppRoutes.home);
     } else {

@@ -365,12 +365,13 @@ class _DocExtractorScreenState extends ConsumerState<DocExtractorScreen>
                 size: 20,
               ),
             ),
-            const SizedBox(width: 10),
-            Text(
-              'AI Document Extractor',
-              style: GoogleFonts.inter(
-                fontWeight: FontWeight.w800,
-                fontSize: 18,
+            Expanded(
+              child: Text(
+                'AI Document Extractor',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17,
+                ),
               ),
             ),
           ],

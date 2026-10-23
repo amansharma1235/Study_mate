@@ -31,6 +31,7 @@ import '../../features/settings/about_screen.dart';
 import '../../features/settings/appearance_settings_screen.dart';
 import '../../features/settings/data_export_screen.dart';
 import '../../features/settings/delete_account_screen.dart';
+import '../../features/settings/diagnostics_screen.dart';
 import '../../features/settings/help_support_screen.dart';
 import '../../features/settings/more_tools_screen.dart';
 import '../../features/settings/notification_settings_screen.dart';
@@ -69,11 +70,16 @@ import '../../data/models/exam_simulator_model.dart';
 import '../../features/exams/simulator/exam_simulator_config_screen.dart';
 import '../../features/exams/simulator/exam_simulator_screen.dart';
 import '../../features/exams/simulator/exam_simulator_result_screen.dart';
+import '../widgets/not_found_404_screen.dart';
 import 'route_names.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: AppRoutes.onboarding,
+    initialLocation: AppRoutes.splash,
+    errorBuilder: (context, state) => NotFound404Screen(
+      uri: state.uri.toString(),
+      error: state.error,
+    ),
     routes: [
       GoRoute(
         path: AppRoutes.splash,
@@ -328,6 +334,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.deleteAccount,
         builder: (context, state) => const DeleteAccountScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.diagnostics,
+        builder: (context, state) => const DiagnosticsScreen(),
       ),
 
       // Smart Study Planner

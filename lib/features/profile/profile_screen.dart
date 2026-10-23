@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -569,18 +570,22 @@ class ProfileScreen extends ConsumerWidget {
       final picker = ImagePicker();
       final image = await picker.pickImage(
         source: source,
-        maxWidth: 600,
-        maxHeight: 600,
-        imageQuality: 85,
+        maxWidth: 400,
+        maxHeight: 400,
+        imageQuality: 80,
       );
       if (image == null) return;
+
+      final bytes = await image.readAsBytes();
+      final photoString = 'data:image/jpeg;base64,${base64Encode(bytes)}';
 
       final user = ref.read(currentProfileProvider);
       final currentName = user?.displayName ?? 'Student';
       await ref.read(authControllerProvider.notifier).updateProfile(
             displayName: currentName,
-            photoUrl: image.path,
+            photoUrl: photoString,
           );
+      ref.invalidate(homeDashboardProvider);
       if (context.mounted) {
         AppDialogs.showSnackBar(
           context,

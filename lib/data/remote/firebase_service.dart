@@ -27,8 +27,16 @@ class FirebaseService {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
+      // Non-negotiable cloud-first policy: disable local disk caching for Firestore
+      try {
+        FirebaseFirestore.instance.settings = const Settings(
+          persistenceEnabled: false,
+        );
+      } catch (settingsErr) {
+        debugPrint('Firestore settings note: $settingsErr');
+      }
       _isInitialized = true;
-      debugPrint('Firebase successfully initialized for project: studymate-e8da6');
+      debugPrint('Firebase successfully initialized for project: studymate-e8da6 with cloud-first zero-persistence');
     } catch (e) {
       debugPrint('Firebase is not yet configured with native credentials: $e');
       _isInitialized = false;

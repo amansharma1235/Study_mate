@@ -114,4 +114,5 @@ class AppRoutes {
   static const String about = '/settings/about';
   static const String dataExport = '/settings/data-export';
   static const String deleteAccount = '/settings/delete-account';
+  static const String diagnostics = '/settings/diagnostics';
 }

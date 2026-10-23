@@ -250,6 +250,22 @@ class _MoreToolsScreenState extends State<MoreToolsScreen> {
       'category': 'Account & Settings',
     },
     {
+      'title': 'System Diagnostics & Logs',
+      'subtitle': 'Error tracking, network health & runtime audit',
+      'icon': Icons.bug_report_outlined,
+      'color': AppColors.warning,
+      'route': AppRoutes.diagnostics,
+      'category': 'Account & Settings',
+    },
+    {
+      'title': 'Delete Account',
+      'subtitle': 'Permanently wipe all student cloud & local data',
+      'icon': Icons.delete_forever_rounded,
+      'color': AppColors.error,
+      'route': AppRoutes.deleteAccount,
+      'category': 'Account & Settings',
+    },
+    {
       'title': 'About StudyMate',
       'subtitle': 'App version, mission, and credits',
       'icon': Icons.info_outline_rounded,

@@ -1,41 +1,62 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../local/app_database.dart';
 import '../local/notification_service.dart';
 import '../models/exam_model.dart';
 import '../models/sync_status.dart';
 import '../remote/firebase_service.dart';
 
 final examsRepositoryProvider = Provider<ExamsRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
   final firebaseService = ref.watch(firebaseServiceProvider);
   final notificationService = ref.watch(notificationServiceProvider);
-  return ExamsRepository(db, firebaseService, notificationService);
+  return ExamsRepository(firebaseService, notificationService);
 });
 
+/// Pure Cloud-First Exams Repository.
+/// All exams and countdown data are stored in Cloud Firestore (users/{userId}/exams).
+/// In-memory state is maintained temporarily during execution.
+/// No exam records are persisted locally in SQLite or local files.
 class ExamsRepository {
-  final AppDatabase _db;
   final FirebaseService _firebaseService;
   final NotificationService _notificationService;
+  final Map<String, List<ExamModel>> _sessionCache = {};
 
-  ExamsRepository(this._db, this._firebaseService, this._notificationService);
+  ExamsRepository(this._firebaseService, this._notificationService);
 
   Future<List<ExamModel>> getExams(String userId) async {
-    final localExams = await _db.getExams(userId);
+    if (userId.isEmpty) return [];
 
-    if (_firebaseService.isConfigured && userId.isNotEmpty) {
-      _syncFromRemote(userId).catchError((e) {
-        debugPrint('Exams remote sync notice: $e');
-        return <ExamModel>[];
-      });
+    if (_firebaseService.isConfigured && userId != 'guest') {
+      try {
+        final col = _firebaseService.getUserCollection(userId, 'exams');
+        if (col != null) {
+          final snapshot = await col.orderBy('examDate', descending: false).get();
+          final exams = snapshot.docs
+              .map((doc) => ExamModel.fromMap(doc.data()))
+              .toList();
+          _sessionCache[userId] = exams;
+          return exams;
+        }
+      } catch (e) {
+        debugPrint('Cloud exams fetch notice: $e');
+        return _sessionCache[userId] ?? [];
+      }
     }
 
-    return localExams;
+    return _sessionCache[userId] ?? [];
   }
 
   Future<void> saveExam(ExamModel exam) async {
-    await _db.insertExam(exam);
+    final examWithSync = exam.copyWith(syncStatus: SyncStatus.synced);
+
+    final list = _sessionCache[exam.userId] ?? [];
+    final index = list.indexWhere((e) => e.id == exam.id);
+    if (index >= 0) {
+      list[index] = examWithSync;
+    } else {
+      list.add(examWithSync);
+    }
+    _sessionCache[exam.userId] = list;
 
     if (exam.reminderEnabled &&
         !exam.isCompleted &&
@@ -51,48 +72,25 @@ class ExamsRepository {
       _notificationService.cancelNotification(exam.id.hashCode.abs());
     }
 
-    if (_firebaseService.isConfigured && exam.userId.isNotEmpty) {
-      try {
-        final col = _firebaseService.getUserCollection(exam.userId, 'exams');
-        if (col != null) {
-          await col.doc(exam.id).set(exam.toFirestoreMap());
-          await _db.updateExam(exam.copyWith(syncStatus: SyncStatus.synced));
-        }
-      } catch (e) {
-        debugPrint('Firestore exam upload warning: $e');
-        await _db.updateExam(exam.copyWith(syncStatus: SyncStatus.pendingSync));
+    if (_firebaseService.isConfigured && exam.userId.isNotEmpty && exam.userId != 'guest') {
+      final col = _firebaseService.getUserCollection(exam.userId, 'exams');
+      if (col != null) {
+        await col.doc(exam.id).set(examWithSync.toFirestoreMap());
       }
     }
   }
 
   Future<void> deleteExam(String id, String userId) async {
-    await _db.deleteExam(id);
+    if (_sessionCache.containsKey(userId)) {
+      _sessionCache[userId]!.removeWhere((e) => e.id == id);
+    }
     _notificationService.cancelNotification(id.hashCode.abs());
 
-    if (_firebaseService.isConfigured && userId.isNotEmpty) {
-      try {
-        final col = _firebaseService.getUserCollection(userId, 'exams');
-        if (col != null) {
-          await col.doc(id).delete();
-        }
-      } catch (e) {
-        debugPrint('Firestore exam delete warning: $e');
+    if (_firebaseService.isConfigured && userId.isNotEmpty && userId != 'guest') {
+      final col = _firebaseService.getUserCollection(userId, 'exams');
+      if (col != null) {
+        await col.doc(id).delete();
       }
     }
-  }
-
-  Future<List<ExamModel>> _syncFromRemote(String userId) async {
-    final col = _firebaseService.getUserCollection(userId, 'exams');
-    if (col == null) return [];
-
-    final snapshot = await col.get();
-    final remoteExams = snapshot.docs
-        .map((doc) => ExamModel.fromMap(doc.data()))
-        .toList();
-
-    for (final exam in remoteExams) {
-      await _db.insertExam(exam.copyWith(syncStatus: SyncStatus.synced));
-    }
-    return remoteExams;
   }
 }

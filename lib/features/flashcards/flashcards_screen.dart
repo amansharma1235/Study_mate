@@ -296,39 +296,46 @@ class FlashcardsScreen extends ConsumerWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: mastery.retentionPercentage >= 70
-                                          ? AppColors.success.withValues(alpha: 0.15)
-                                          : AppColors.primary.withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      '🧠 ${mastery.retentionPercentage}% Retained',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
+                              Flexible(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                      decoration: BoxDecoration(
                                         color: mastery.retentionPercentage >= 70
-                                            ? AppColors.success
-                                            : AppColors.primary,
+                                            ? AppColors.success.withValues(alpha: 0.15)
+                                            : AppColors.primary.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        '🧠 ${mastery.retentionPercentage}% Retained',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                          color: mastery.retentionPercentage >= 70
+                                              ? AppColors.success
+                                              : AppColors.primary,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  if (mastery.box4Mastered > 0) ...[
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      '• ${mastery.box4Mastered} Mastered',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF10B981),
+                                    if (mastery.box4Mastered > 0) ...[
+                                      const SizedBox(width: 6),
+                                      Flexible(
+                                        child: Text(
+                                          '• ${mastery.box4Mastered} Mastered',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF10B981),
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                    ],
                                   ],
-                                ],
+                                ),
                               ),
                               if (mastery.dueToday > 0)
                                 Container(

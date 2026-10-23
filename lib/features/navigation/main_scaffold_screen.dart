@@ -66,54 +66,84 @@ class MainScaffoldScreen extends StatelessWidget {
       body: child,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+          color: isDark ? AppColors.surfaceDark : Colors.white,
           border: Border(
             top: BorderSide(
-              color: isDark ? AppColors.borderDark : AppColors.borderLight,
+              color: isDark ? AppColors.borderDark : const Color(0xFFF1F5F9),
               width: 1,
             ),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, -3),
+            ),
+          ],
         ),
-        child: BottomNavigationBar(
-          currentIndex: currentIndex,
-          onTap: (idx) => _onItemTapped(idx, context),
-          backgroundColor: isDark
-              ? AppColors.surfaceDark
-              : AppColors.surfaceLight,
-          selectedItemColor: Theme.of(context).primaryColor,
-          unselectedItemColor: isDark
-              ? AppColors.textMutedDark
-              : AppColors.textSecondaryLight,
-          selectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 12,
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 64,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(context, 0, currentIndex, Icons.home_rounded, Icons.home_outlined, AppStrings.navHome, isDark),
+                _buildNavItem(context, 1, currentIndex, Icons.article_rounded, Icons.article_outlined, AppStrings.navNotes, isDark),
+                _buildNavItem(context, 2, currentIndex, Icons.check_circle_rounded, Icons.check_circle_outline_rounded, AppStrings.navTasks, isDark),
+                _buildNavItem(context, 3, currentIndex, Icons.grid_view_rounded, Icons.grid_view_outlined, AppStrings.navMore, isDark),
+              ],
+            ),
           ),
-          unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 12,
-          ),
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard_rounded),
-              label: AppStrings.navHome,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(
+    BuildContext context,
+    int index,
+    int currentIndex,
+    IconData activeIcon,
+    IconData inactiveIcon,
+    String label,
+    bool isDark,
+  ) {
+    final isSelected = index == currentIndex;
+    const activeColor = Color(0xFF2563EB);
+    final inactiveColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+
+    return InkWell(
+      onTap: () => _onItemTapped(index, context),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isSelected ? activeIcon : inactiveIcon,
+              color: isSelected ? activeColor : inactiveColor,
+              size: 24,
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.description_outlined),
-              activeIcon: Icon(Icons.description_rounded),
-              label: AppStrings.navNotes,
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? activeColor : inactiveColor,
+              ),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.check_circle_outline_rounded),
-              activeIcon: Icon(Icons.check_circle_rounded),
-              label: AppStrings.navTasks,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.grid_view_rounded),
-              activeIcon: Icon(Icons.grid_view_sharp),
-              label: AppStrings.navMore,
+            const SizedBox(height: 2),
+            Container(
+              width: 16,
+              height: 2.5,
+              decoration: BoxDecoration(
+                color: isSelected ? activeColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
           ],
         ),

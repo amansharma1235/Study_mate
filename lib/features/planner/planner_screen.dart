@@ -33,8 +33,8 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
           : AppColors.backgroundLight,
       appBar: AppBar(
         title: Text(
-          'Smart Study Planner',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+          'Study Planner',
+          style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700),
         ),
         actions: [
           IconButton(
@@ -674,9 +674,14 @@ class _PlannerScreenState extends ConsumerState<PlannerScreen> {
             children: [
               const Icon(Icons.auto_awesome_rounded, color: AppColors.primary),
               const SizedBox(width: 8),
-              Text(
-                'Smart Auto-Planner',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+              Expanded(
+                child: Text(
+                  'Smart Auto-Planner',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16.5,
+                  ),
+                ),
               ),
             ],
           ),

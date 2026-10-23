@@ -1,87 +1,81 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../local/app_database.dart';
 import '../models/sync_status.dart';
 import '../models/timetable_model.dart';
 import '../remote/firebase_service.dart';
 
 final timetableRepositoryProvider = Provider<TimetableRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
   final firebaseService = ref.watch(firebaseServiceProvider);
-  return TimetableRepository(db, firebaseService);
+  return TimetableRepository(firebaseService);
 });
 
+/// Pure Cloud-First Timetable Repository.
+/// All timetable schedules are saved to Cloud Firestore (users/{userId}/timetable).
+/// In-memory state is maintained temporarily during execution.
+/// No schedule records are persisted locally in SQLite or local files.
 class TimetableRepository {
-  final AppDatabase _db;
   final FirebaseService _firebaseService;
+  final Map<String, List<TimetableModel>> _sessionCache = {};
 
-  TimetableRepository(this._db, this._firebaseService);
+  TimetableRepository(this._firebaseService);
 
   Future<List<TimetableModel>> getTimetable(String userId) async {
-    final localEntries = await _db.getTimetable(userId);
+    if (userId.isEmpty) return [];
 
-    if (_firebaseService.isConfigured && userId.isNotEmpty) {
-      _syncFromRemote(userId).catchError((e) {
-        debugPrint('Timetable remote sync notice: $e');
-        return <TimetableModel>[];
-      });
+    if (_firebaseService.isConfigured && userId != 'guest') {
+      try {
+        final col = _firebaseService.getUserCollection(userId, 'timetable');
+        if (col != null) {
+          final snapshot = await col
+              .orderBy('dayOfWeek', descending: false)
+              .orderBy('startTime', descending: false)
+              .get();
+          final entries = snapshot.docs
+              .map((doc) => TimetableModel.fromMap(doc.data()))
+              .toList();
+          _sessionCache[userId] = entries;
+          return entries;
+        }
+      } catch (e) {
+        debugPrint('Cloud timetable fetch notice: $e');
+        return _sessionCache[userId] ?? [];
+      }
     }
 
-    return localEntries;
+    return _sessionCache[userId] ?? [];
   }
 
   Future<void> saveTimetable(TimetableModel entry) async {
-    await _db.insertTimetable(entry);
+    final entryWithSync = entry.copyWith(syncStatus: SyncStatus.synced);
 
-    if (_firebaseService.isConfigured && entry.userId.isNotEmpty) {
-      try {
-        final col = _firebaseService.getUserCollection(
-          entry.userId,
-          'timetable',
-        );
-        if (col != null) {
-          await col.doc(entry.id).set(entry.toFirestoreMap());
-          await _db.updateTimetable(
-            entry.copyWith(syncStatus: SyncStatus.synced),
-          );
-        }
-      } catch (e) {
-        debugPrint('Firestore timetable upload warning: $e');
-        await _db.updateTimetable(
-          entry.copyWith(syncStatus: SyncStatus.pendingSync),
-        );
+    final list = _sessionCache[entry.userId] ?? [];
+    final index = list.indexWhere((e) => e.id == entry.id);
+    if (index >= 0) {
+      list[index] = entryWithSync;
+    } else {
+      list.add(entryWithSync);
+    }
+    _sessionCache[entry.userId] = list;
+
+    if (_firebaseService.isConfigured && entry.userId.isNotEmpty && entry.userId != 'guest') {
+      final col = _firebaseService.getUserCollection(entry.userId, 'timetable');
+      if (col != null) {
+        await col.doc(entry.id).set(entryWithSync.toFirestoreMap());
       }
     }
   }
 
   Future<void> deleteTimetable(String id, String userId) async {
-    await _db.deleteTimetable(id);
+    if (_sessionCache.containsKey(userId)) {
+      _sessionCache[userId]!.removeWhere((e) => e.id == id);
+    }
 
-    if (_firebaseService.isConfigured && userId.isNotEmpty) {
-      try {
-        final col = _firebaseService.getUserCollection(userId, 'timetable');
-        if (col != null) {
-          await col.doc(id).delete();
-        }
-      } catch (e) {
-        debugPrint('Firestore timetable delete warning: $e');
+    if (_firebaseService.isConfigured && userId.isNotEmpty && userId != 'guest') {
+      final col = _firebaseService.getUserCollection(userId, 'timetable');
+      if (col != null) {
+        await col.doc(id).delete();
       }
     }
-  }
-
-  Future<List<TimetableModel>> _syncFromRemote(String userId) async {
-    final col = _firebaseService.getUserCollection(userId, 'timetable');
-    if (col == null) return [];
-
-    final snapshot = await col.get();
-    final remoteEntries = snapshot.docs
-        .map((doc) => TimetableModel.fromMap(doc.data()))
-        .toList();
-
-    for (final entry in remoteEntries) {
-      await _db.insertTimetable(entry.copyWith(syncStatus: SyncStatus.synced));
-    }
-    return remoteEntries;
   }
 }

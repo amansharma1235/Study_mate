@@ -32,6 +32,8 @@ Type any question, topic, or formula you'd like to understand! 🚀
 
     // Mode-specific specialized handlers
     switch (mode) {
+      case AiTaskMode.socraticTutor:
+        return _socraticGuide(query, q);
       case AiTaskMode.summarizeNotes:
         return _summarizeText(query);
       case AiTaskMode.generateQuestions:
@@ -381,5 +383,29 @@ State the two fundamental boundary assumptions required before calculating value
 • **Day 12 (+1 week):** Complete a timed 15-minute mock quiz using StudyMate Pomodoro.
 • **Day 30 (+1 month):** Final rapid review before school / board term examinations.
 ''';
+  }
+
+  static String _socraticGuide(String query, String q) {
+    return """
+🧑‍🏫 **Socratic Tutor: Let's Solve This Together!**
+
+You asked: *"$query"*
+
+Instead of just handing you the final answer, let's break down your understanding step-by-step:
+
+1. **Step 1: What are our Givens / First Principles?**
+   • What fundamental definitions or physical laws apply to this situation?
+   • What are the variables we know, and what are we looking to discover?
+
+2. **Step 2: Key Guiding Question:**
+   • *Think about this:* If one variable doubles or changes direction, how does the rest of the system respond?
+   • What formula or relationship connects these two concepts?
+
+3. **Step 3: Try It Out:**
+   • Take a guess or write down your first step and reply below.
+   • Don't worry about making mistakes — that's how true learning happens!
+
+💬 *Reply with your thoughts, and I'll tell you if you're on the right track!*
+""";
   }
 }

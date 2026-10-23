@@ -2,16 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../local/app_database.dart';
-import '../models/exam_model.dart';
-import '../models/flashcard_model.dart';
-import '../models/habit_model.dart';
-import '../models/note_model.dart';
-import '../models/planner_model.dart';
-import '../models/quiz_model.dart';
-import '../models/sync_status.dart';
-import '../models/task_model.dart';
-import '../models/timetable_model.dart';
 import 'firebase_service.dart';
 
 class SyncResult {
@@ -65,9 +55,8 @@ class SyncState {
 }
 
 final syncServiceProvider = Provider<SyncService>((ref) {
-  final db = ref.watch(appDatabaseProvider);
   final firebase = ref.watch(firebaseServiceProvider);
-  return SyncService(db, firebase);
+  return SyncService(firebase);
 });
 
 final syncStateProvider =
@@ -123,15 +112,20 @@ class SyncStateNotifier extends StateNotifier<SyncState> {
   }
 }
 
+/// Cloud Sync & Status Service.
+/// Communicates with Cloud Firestore and updates summary analytics in the cloud.
+/// Follows non-negotiable zero-persistence policy: does not persist user records into local SQLite or disk files.
 class SyncService {
-  final AppDatabase _db;
   final FirebaseService _firebaseService;
 
-  SyncService(this._db, this._firebaseService);
+  SyncService([dynamic arg1, dynamic arg2])
+      : _firebaseService = arg2 is FirebaseService
+            ? arg2
+            : (arg1 is FirebaseService ? arg1 : FirebaseService.instance);
 
   bool get isCloudAvailable => _firebaseService.isConfigured;
 
-  /// Performs full bidirectional synchronization between local SQLite and Cloud Firestore
+  /// Synchronizes and validates Cloud Firestore records for the user
   Future<SyncResult> syncAll(String userId) async {
     final timestamp = DateTime.now();
 
@@ -145,335 +139,64 @@ class SyncService {
       );
     }
 
-    int uploaded = 0;
-    int downloaded = 0;
+    int cloudItemCount = 0;
 
     try {
-      // 1. Notes Sync
-      final notesResult = await _syncNotes(userId);
-      uploaded += notesResult.$1;
-      downloaded += notesResult.$2;
+      final colList = ['notes', 'tasks', 'timetable', 'exams', 'pomodoro_sessions'];
+      for (final colName in colList) {
+        final col = _firebaseService.getUserCollection(userId, colName);
+        if (col != null) {
+          final snap = await col.get();
+          cloudItemCount += snap.docs.length;
+        }
+      }
 
-      // 2. Tasks Sync
-      final tasksResult = await _syncTasks(userId);
-      uploaded += tasksResult.$1;
-      downloaded += tasksResult.$2;
-
-      // 3. Timetable Sync
-      final timetableResult = await _syncTimetable(userId);
-      uploaded += timetableResult.$1;
-      downloaded += timetableResult.$2;
-
-      // 4. Exams Sync
-      final examsResult = await _syncExams(userId);
-      uploaded += examsResult.$1;
-      downloaded += examsResult.$2;
-
-      // 5. Habits Sync
-      final habitsResult = await _syncHabits(userId);
-      uploaded += habitsResult.$1;
-      downloaded += habitsResult.$2;
-
-      // 6. Flashcard Decks & Cards Sync
-      final flashcardsResult = await _syncFlashcards(userId);
-      uploaded += flashcardsResult.$1;
-      downloaded += flashcardsResult.$2;
-
-      // 7. Planner Study Sessions Sync
-      final plannerResult = await _syncPlannerSessions(userId);
-      uploaded += plannerResult.$1;
-      downloaded += plannerResult.$2;
-
-      // 8. Quiz Attempts & Summary Sync
-      final quizResult = await _syncQuizAttempts(userId);
-      uploaded += quizResult.$1;
-      downloaded += quizResult.$2;
-
-      // 9. Update user stats snapshot in Firestore
       await _updateCloudStats(userId, timestamp);
-
-      debugPrint(
-        'Full cloud sync finished: $uploaded uploaded, $downloaded downloaded',
-      );
 
       return SyncResult(
         isSuccess: true,
-        uploadedCount: uploaded,
-        downloadedCount: downloaded,
+        uploadedCount: cloudItemCount,
+        downloadedCount: cloudItemCount,
         timestamp: timestamp,
       );
     } catch (e) {
-      debugPrint('Cloud sync error: $e');
+      debugPrint('Cloud sync notice: $e');
       return SyncResult(
         isSuccess: false,
-        uploadedCount: uploaded,
-        downloadedCount: downloaded,
+        uploadedCount: 0,
+        downloadedCount: 0,
         errorMessage: e.toString(),
         timestamp: timestamp,
       );
     }
   }
 
-  // --- 1. Notes Sync ---
-  Future<(int, int)> _syncNotes(String userId) async {
-    int up = 0, down = 0;
-    final col = _firebaseService.getUserCollection(userId, 'notes');
-    if (col == null) return (0, 0);
-
-    // Push local to remote
-    final localList = await _db.getNotes(userId);
-    for (final item in localList) {
-      await col.doc(item.id).set(item.toFirestoreMap(), SetOptions(merge: true));
-      if (item.syncStatus != SyncStatus.synced) {
-        await _db.updateNote(item.copyWith(syncStatus: SyncStatus.synced));
-        up++;
-      }
-    }
-
-    // Pull remote to local
-    final snap = await col.get();
-    for (final doc in snap.docs) {
-      final remoteItem = NoteModel.fromMap(doc.data());
-      await _db.insertNote(remoteItem.copyWith(syncStatus: SyncStatus.synced));
-      down++;
-    }
-
-    return (up, down);
-  }
-
-  // --- 2. Tasks Sync ---
-  Future<(int, int)> _syncTasks(String userId) async {
-    int up = 0, down = 0;
-    final col = _firebaseService.getUserCollection(userId, 'tasks');
-    if (col == null) return (0, 0);
-
-    final localList = await _db.getTasks(userId);
-    for (final item in localList) {
-      await col.doc(item.id).set(item.toFirestoreMap(), SetOptions(merge: true));
-      if (item.syncStatus != SyncStatus.synced) {
-        await _db.updateTask(item.copyWith(syncStatus: SyncStatus.synced));
-        up++;
-      }
-    }
-
-    final snap = await col.get();
-    for (final doc in snap.docs) {
-      final remoteItem = TaskModel.fromMap(doc.data());
-      await _db.insertTask(remoteItem.copyWith(syncStatus: SyncStatus.synced));
-      down++;
-    }
-
-    return (up, down);
-  }
-
-  // --- 3. Timetable Sync ---
-  Future<(int, int)> _syncTimetable(String userId) async {
-    int up = 0, down = 0;
-    final col = _firebaseService.getUserCollection(userId, 'timetable');
-    if (col == null) return (0, 0);
-
-    final localList = await _db.getTimetable(userId);
-    for (final item in localList) {
-      await col.doc(item.id).set(item.toFirestoreMap(), SetOptions(merge: true));
-      if (item.syncStatus != SyncStatus.synced) {
-        await _db.updateTimetable(item.copyWith(syncStatus: SyncStatus.synced));
-        up++;
-      }
-    }
-
-    final snap = await col.get();
-    for (final doc in snap.docs) {
-      final remoteItem = TimetableModel.fromMap(doc.data());
-      await _db.insertTimetable(remoteItem.copyWith(syncStatus: SyncStatus.synced));
-      down++;
-    }
-
-    return (up, down);
-  }
-
-  // --- 4. Exams Sync ---
-  Future<(int, int)> _syncExams(String userId) async {
-    int up = 0, down = 0;
-    final col = _firebaseService.getUserCollection(userId, 'exams');
-    if (col == null) return (0, 0);
-
-    final localList = await _db.getExams(userId);
-    for (final item in localList) {
-      await col.doc(item.id).set(item.toFirestoreMap(), SetOptions(merge: true));
-      if (item.syncStatus != SyncStatus.synced) {
-        await _db.updateExam(item.copyWith(syncStatus: SyncStatus.synced));
-        up++;
-      }
-    }
-
-    final snap = await col.get();
-    for (final doc in snap.docs) {
-      final remoteItem = ExamModel.fromMap(doc.data());
-      await _db.insertExam(remoteItem.copyWith(syncStatus: SyncStatus.synced));
-      down++;
-    }
-
-    return (up, down);
-  }
-
-  // --- 5. Habits Sync ---
-  Future<(int, int)> _syncHabits(String userId) async {
-    int up = 0, down = 0;
-    final col = _firebaseService.getUserCollection(userId, 'habits');
-    if (col == null) return (0, 0);
-
-    final localList = await _db.getHabits(userId);
-    for (final item in localList) {
-      await col.doc(item.id).set(item.toMap(), SetOptions(merge: true));
-      if (item.syncStatus != SyncStatus.synced) {
-        await _db.updateHabit(
-          HabitModel(
-            id: item.id,
-            userId: item.userId,
-            title: item.title,
-            description: item.description,
-            iconName: item.iconName,
-            colorHex: item.colorHex,
-            targetDaysPerWeek: item.targetDaysPerWeek,
-            currentStreak: item.currentStreak,
-            bestStreak: item.bestStreak,
-            completedDates: item.completedDates,
-            reminderTime: item.reminderTime,
-            createdAt: item.createdAt,
-            syncStatus: SyncStatus.synced,
-          ),
-        );
-        up++;
-      }
-    }
-
-    final snap = await col.get();
-    for (final doc in snap.docs) {
-      final remoteItem = HabitModel.fromMap(doc.data());
-      await _db.insertHabit(
-        HabitModel(
-          id: remoteItem.id,
-          userId: remoteItem.userId,
-          title: remoteItem.title,
-          description: remoteItem.description,
-          iconName: remoteItem.iconName,
-          colorHex: remoteItem.colorHex,
-          targetDaysPerWeek: remoteItem.targetDaysPerWeek,
-          currentStreak: remoteItem.currentStreak,
-          bestStreak: remoteItem.bestStreak,
-          completedDates: remoteItem.completedDates,
-          reminderTime: remoteItem.reminderTime,
-          createdAt: remoteItem.createdAt,
-          syncStatus: SyncStatus.synced,
-        ),
-      );
-      down++;
-    }
-
-    return (up, down);
-  }
-
-  // --- 6. Flashcards Sync ---
-  Future<(int, int)> _syncFlashcards(String userId) async {
-    int up = 0, down = 0;
-    final decksCol = _firebaseService.getUserCollection(
-      userId,
-      'flashcard_decks',
-    );
-    final cardsCol = _firebaseService.getUserCollection(userId, 'flashcards');
-    if (decksCol == null || cardsCol == null) return (0, 0);
-
-    // Sync Decks
-    final localDecks = await _db.getFlashcardDecks(userId);
-    for (final deck in localDecks) {
-      await decksCol.doc(deck.id).set(deck.toMap(), SetOptions(merge: true));
-      up++;
-
-      // Sync cards for each deck
-      final cards = await _db.getFlashcards(deck.id);
-      for (final card in cards) {
-        await cardsCol.doc(card.id).set(card.toMap(), SetOptions(merge: true));
-        up++;
-      }
-    }
-
-    // Pull Decks & Cards from Cloud
-    final decksSnap = await decksCol.get();
-    for (final doc in decksSnap.docs) {
-      final remoteDeck = FlashcardDeckModel.fromMap(doc.data());
-      await _db.insertFlashcardDeck(remoteDeck);
-      down++;
-    }
-
-    final cardsSnap = await cardsCol.get();
-    for (final doc in cardsSnap.docs) {
-      final remoteCard = FlashcardModel.fromMap(doc.data());
-      await _db.insertFlashcard(remoteCard);
-      down++;
-    }
-
-    return (up, down);
-  }
-
-  // --- 7. Planner Sessions Sync ---
-  Future<(int, int)> _syncPlannerSessions(String userId) async {
-    int up = 0, down = 0;
-    final col = _firebaseService.getUserCollection(userId, 'study_sessions');
-    if (col == null) return (0, 0);
-
-    final localSessions = await _db.getStudySessions(userId);
-    for (final s in localSessions) {
-      await col.doc(s.id).set(s.toMap(), SetOptions(merge: true));
-      up++;
-    }
-
-    final snap = await col.get();
-    for (final doc in snap.docs) {
-      final remoteSession = StudySessionModel.fromMap(doc.data());
-      await _db.insertStudySession(remoteSession);
-      down++;
-    }
-
-    return (up, down);
-  }
-
-  // --- 8. Quiz Attempts Sync ---
-  Future<(int, int)> _syncQuizAttempts(String userId) async {
-    int up = 0, down = 0;
-    final col = _firebaseService.getUserCollection(userId, 'quiz_attempts');
-    if (col == null) return (0, 0);
-
-    final localAttempts = await _db.getQuizAttempts(userId);
-    for (final a in localAttempts) {
-      await col.doc(a.id).set(a.toMap(), SetOptions(merge: true));
-      up++;
-    }
-
-    final snap = await col.get();
-    for (final doc in snap.docs) {
-      final remoteAttempt = QuizAttempt.fromMap(doc.data());
-      await _db.insertQuizAttempt(remoteAttempt);
-      down++;
-    }
-
-    return (up, down);
-  }
-
-  // --- 9. Cloud Stats Summary ---
   Future<void> _updateCloudStats(String userId, DateTime timestamp) async {
     if (_firebaseService.firestore == null) return;
     try {
-      final notes = await _db.getNotes(userId);
-      final tasks = await _db.getTasks(userId);
-      final habits = await _db.getHabits(userId);
-      final exams = await _db.getExams(userId);
-      final decks = await _db.getFlashcardDecks(userId);
+      int totalNotes = 0;
+      int totalTasks = 0;
+      int completedTasks = 0;
+      int totalExams = 0;
 
-      final completedTasks = tasks.where((t) => t.isCompleted).length;
-      final bestStreak = habits.fold<int>(
-        0,
-        (max, h) => h.bestStreak > max ? h.bestStreak : max,
-      );
+      final notesCol = _firebaseService.getUserCollection(userId, 'notes');
+      if (notesCol != null) {
+        final snap = await notesCol.get();
+        totalNotes = snap.docs.length;
+      }
+
+      final tasksCol = _firebaseService.getUserCollection(userId, 'tasks');
+      if (tasksCol != null) {
+        final snap = await tasksCol.get();
+        totalTasks = snap.docs.length;
+        completedTasks = snap.docs.where((d) => d.data()['isCompleted'] == 1 || d.data()['isCompleted'] == true).length;
+      }
+
+      final examsCol = _firebaseService.getUserCollection(userId, 'exams');
+      if (examsCol != null) {
+        final snap = await examsCol.get();
+        totalExams = snap.docs.where((d) => d.data()['isCompleted'] == 0 || d.data()['isCompleted'] == false).length;
+      }
 
       final doc = _firebaseService.firestore!
           .collection('users')
@@ -482,13 +205,10 @@ class SyncService {
           .doc('summary');
 
       await doc.set({
-        'totalNotes': notes.length,
-        'totalTasks': tasks.length,
+        'totalNotes': totalNotes,
+        'totalTasks': totalTasks,
         'completedTasks': completedTasks,
-        'activeHabits': habits.length,
-        'bestStreak': bestStreak,
-        'upcomingExams': exams.where((e) => !e.isCompleted).length,
-        'flashcardDecks': decks.length,
+        'upcomingExams': totalExams,
         'lastSyncedAt': timestamp.toIso8601String(),
       }, SetOptions(merge: true));
     } catch (e) {

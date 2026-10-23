@@ -377,7 +377,12 @@ class ScholarXpCard extends ConsumerWidget {
           children: [
             Icon(Icons.military_tech_rounded, color: AppColors.secondary),
             SizedBox(width: 8),
-            Text('Scholar XP System', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            Expanded(
+              child: Text(
+                'Scholar XP System',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+              ),
+            ),
           ],
         ),
         content: Column(

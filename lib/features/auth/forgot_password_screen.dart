@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimensions.dart';
 import '../../core/routing/route_names.dart';
+import '../../core/utils/rate_limiter.dart';
 import '../../core/utils/validators.dart';
 import '../../core/widgets/app_button.dart';
 import '../../core/widgets/app_dialogs.dart';
@@ -33,6 +34,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   Future<void> _handleReset() async {
     if (!_formKey.currentState!.validate()) return;
+
+    final rateCheck = RateLimiter.instance.throttle(
+      'password_reset',
+      cooldown: const Duration(seconds: 60),
+      customErrorMessage: 'Password reset link was recently sent. Please wait 60 seconds before requesting again.',
+    );
+    if (!rateCheck.isAllowed) {
+      AppDialogs.showSnackBar(context, message: rateCheck.errorMessage!, isError: true);
+      return;
+    }
 
     setState(() => _isLoading = true);
     try {

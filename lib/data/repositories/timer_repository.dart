@@ -1,56 +1,75 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../local/app_database.dart';
 import '../models/pomodoro_session_model.dart';
 import '../models/sync_status.dart';
 import '../remote/firebase_service.dart';
 
 final timerRepositoryProvider = Provider<TimerRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
   final firebaseService = ref.watch(firebaseServiceProvider);
-  return TimerRepository(db, firebaseService);
+  return TimerRepository(firebaseService);
 });
 
+/// Pure Cloud-First Timer Repository.
+/// All completed study focus sessions are written to Cloud Firestore (users/{userId}/pomodoro_sessions).
+/// In-memory state is maintained temporarily during execution.
+/// No session logs are persisted locally in SQLite or local files.
 class TimerRepository {
-  final AppDatabase _db;
   final FirebaseService _firebaseService;
+  final Map<String, List<PomodoroSessionModel>> _sessionCache = {};
 
-  TimerRepository(this._db, this._firebaseService);
+  TimerRepository(this._firebaseService);
 
   Future<List<PomodoroSessionModel>> getSessions(String userId) async {
-    final localSessions = await _db.getSessions(userId);
+    if (userId.isEmpty) return [];
 
-    if (_firebaseService.isConfigured && userId.isNotEmpty) {
-      _syncFromRemote(userId).catchError((e) {
-        debugPrint('Timer sessions sync notice: $e');
-        return <PomodoroSessionModel>[];
-      });
-    }
-
-    return localSessions;
-  }
-
-  Future<void> recordSession(PomodoroSessionModel session) async {
-    await _db.insertSession(session);
-
-    if (_firebaseService.isConfigured && session.userId.isNotEmpty) {
+    if (_firebaseService.isConfigured && userId != 'guest') {
       try {
         final col = _firebaseService.getUserCollection(
-          session.userId,
+          userId,
           'pomodoro_sessions',
         );
         if (col != null) {
-          await col.doc(session.id).set(session.toFirestoreMap());
+          final snapshot = await col
+              .orderBy('completedAt', descending: true)
+              .get();
+          final sessions = snapshot.docs
+              .map((doc) => PomodoroSessionModel.fromMap(doc.data()))
+              .toList();
+          _sessionCache[userId] = sessions;
+          return sessions;
         }
       } catch (e) {
-        debugPrint('Firestore timer session record warning: $e');
+        debugPrint('Cloud timer sessions fetch notice: $e');
+        return _sessionCache[userId] ?? [];
+      }
+    }
+
+    return _sessionCache[userId] ?? [];
+  }
+
+  Future<void> recordSession(PomodoroSessionModel session) async {
+    final sessionWithSync = session.copyWith(syncStatus: SyncStatus.synced);
+
+    final list = _sessionCache[session.userId] ?? [];
+    list.insert(0, sessionWithSync);
+    _sessionCache[session.userId] = list;
+
+    if (_firebaseService.isConfigured &&
+        session.userId.isNotEmpty &&
+        session.userId != 'guest') {
+      final col = _firebaseService.getUserCollection(
+        session.userId,
+        'pomodoro_sessions',
+      );
+      if (col != null) {
+        await col.doc(session.id).set(sessionWithSync.toFirestoreMap());
       }
     }
   }
 
   Future<int> getTodayStudyMinutes(String userId) async {
-    final sessions = await _db.getSessions(userId);
+    final sessions = await getSessions(userId);
     final now = DateTime.now();
 
     return sessions
@@ -65,10 +84,8 @@ class TimerRepository {
   }
 
   Future<Map<int, int>> getWeeklyStudyMinutes(String userId) async {
-    // Maps dayOfWeek (1=Mon..7=Sun) to total focus minutes
-    final sessions = await _db.getSessions(userId);
+    final sessions = await getSessions(userId);
     final now = DateTime.now();
-    // Monday of current week
     final monday = now.subtract(Duration(days: now.weekday - 1));
     final startOfWeek = DateTime(monday.year, monday.month, monday.day);
 
@@ -131,20 +148,5 @@ class TimerRepository {
     }
 
     return streak;
-  }
-
-  Future<List<PomodoroSessionModel>> _syncFromRemote(String userId) async {
-    final col = _firebaseService.getUserCollection(userId, 'pomodoro_sessions');
-    if (col == null) return [];
-
-    final snapshot = await col.get();
-    final remoteSessions = snapshot.docs
-        .map((doc) => PomodoroSessionModel.fromMap(doc.data()))
-        .toList();
-
-    for (final session in remoteSessions) {
-      await _db.insertSession(session.copyWith(syncStatus: SyncStatus.synced));
-    }
-    return remoteSessions;
   }
 }

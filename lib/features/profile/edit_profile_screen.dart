@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -34,8 +35,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final user = ref.read(currentProfileProvider);
     final prefs = ref.read(preferenceServiceProvider);
     _nameController = TextEditingController(text: user?.displayName ?? '');
+    final currentGoal = (user?.dailyGoalMinutes != null && user!.dailyGoalMinutes > 0)
+        ? user.dailyGoalMinutes
+        : prefs.getDailyGoalMinutes(user?.uid);
     _goalController = TextEditingController(
-      text: (user?.dailyGoalMinutes ?? prefs.getDailyGoalMinutes()).toString(),
+      text: currentGoal.toString(),
     );
     _selectedAvatar = user?.photoUrl;
   }
@@ -52,13 +56,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final picker = ImagePicker();
       final image = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 600,
-        maxHeight: 600,
-        imageQuality: 85,
+        maxWidth: 400,
+        maxHeight: 400,
+        imageQuality: 80,
       );
       if (image != null) {
+        final bytes = await image.readAsBytes();
+        final photoString = 'data:image/jpeg;base64,${base64Encode(bytes)}';
         setState(() {
-          _selectedAvatar = image.path;
+          _selectedAvatar = photoString;
         });
       }
     } catch (e) {
@@ -77,7 +83,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final goalMins = int.tryParse(_goalController.text.trim()) ?? 120;
+      final goalMins = int.tryParse(_goalController.text.trim()) ?? 0;
+      final currentUser = ref.read(currentProfileProvider);
 
       await ref
           .read(authControllerProvider.notifier)
@@ -87,7 +94,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             dailyGoalMinutes: goalMins,
           );
 
-      await ref.read(preferenceServiceProvider).setDailyGoalMinutes(goalMins);
+      await ref.read(preferenceServiceProvider).setDailyGoalMinutes(goalMins, currentUser?.uid);
       ref.invalidate(homeDashboardProvider);
 
       if (!mounted) return;

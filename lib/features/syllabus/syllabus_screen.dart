@@ -31,8 +31,8 @@ class SyllabusScreen extends ConsumerWidget {
           : AppColors.backgroundLight,
       appBar: AppBar(
         title: Text(
-          'Syllabus & Revision Tracker',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+          'Syllabus & Revision',
+          style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700),
         ),
         actions: [
           IconButton(
@@ -180,10 +180,8 @@ class SyllabusScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Wrap(
-                        alignment: WrapAlignment.spaceAround,
-                        spacing: 12,
-                        runSpacing: 6,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _buildMiniStat(
                             'Completed',
@@ -422,79 +420,89 @@ class SyllabusScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
 
-            // Revision stats & action button
+            // Revision counter
             Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.repeat_rounded,
                   size: 15,
                   color: AppColors.textMutedLight,
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'Revised: ${topic.revisionCount} times',
+                  'Revised: ${topic.revisionCount} ${topic.revisionCount == 1 ? 'time' : 'times'}',
                   style: TextStyle(
                     fontSize: 12,
+                    fontWeight: FontWeight.w500,
                     color: isDark
                         ? AppColors.textSecondaryDark
                         : AppColors.textSecondaryLight,
                   ),
                 ),
-                const Spacer(),
+              ],
+            ),
+            const SizedBox(height: 10),
 
+            // Action buttons row (side by side, equal width)
+            Row(
+              children: [
                 // AI Practice Quiz Button
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secondary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 4,
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.secondary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 7,
+                        horizontal: 6,
+                      ),
+                      minimumSize: Size.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
-                    minimumSize: Size.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
+                    icon: const Icon(Icons.quiz_rounded, size: 14),
+                    label: const Text(
+                      'AI Quiz',
+                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
                     ),
+                    onPressed: () => _generateTopicQuiz(context, ref, topic),
                   ),
-                  icon: const Icon(Icons.quiz_rounded, size: 14),
-                  label: const Text(
-                    'AI Quiz',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-                  ),
-                  onPressed: () => _generateTopicQuiz(context, ref, topic),
                 ),
                 const SizedBox(width: 8),
 
                 // Mark Revised Button
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    minimumSize: Size.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                  ),
-                  icon: const Icon(Icons.check_rounded, size: 14),
-                  label: const Text(
-                    'Mark Revised',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-                  ),
-                  onPressed: () {
-                    ref
-                        .read(syllabusTopicsProvider.notifier)
-                        .markRevised(topic);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          '✅ Revised "${topic.title}"! Next reminder scheduled in 7 days.',
-                        ),
-                        duration: const Duration(seconds: 2),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 7,
+                        horizontal: 6,
                       ),
-                    );
-                  },
+                      minimumSize: Size.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    icon: const Icon(Icons.check_rounded, size: 14),
+                    label: const Text(
+                      'Mark Revised',
+                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+                    ),
+                    onPressed: () {
+                      ref
+                          .read(syllabusTopicsProvider.notifier)
+                          .markRevised(topic);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            '✅ Revised "${topic.title}"! Next reminder scheduled in 7 days.',
+                          ),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),

@@ -12,7 +12,7 @@ class UserProfileModel {
     required this.email,
     required this.displayName,
     this.photoUrl,
-    this.dailyGoalMinutes = 120,
+    this.dailyGoalMinutes = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -55,7 +55,7 @@ class UserProfileModel {
       email: map['email'] as String,
       displayName: (map['displayName'] as String?) ?? 'Student',
       photoUrl: map['photoUrl'] as String?,
-      dailyGoalMinutes: (map['dailyGoalMinutes'] as num?)?.toInt() ?? 120,
+      dailyGoalMinutes: (map['dailyGoalMinutes'] as num?)?.toInt() ?? 0,
       createdAt: map['createdAt'] != null
           ? DateTime.parse(map['createdAt'] as String)
           : DateTime.now(),
