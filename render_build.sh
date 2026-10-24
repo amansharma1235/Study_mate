@@ -1,21 +1,30 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -e
 
-echo "==> Installing Flutter..."
-git clone https://github.com/flutter/flutter.git -b stable --depth 1 /opt/flutter
-export PATH="/opt/flutter/bin:$PATH"
+echo "==> Setting up Flutter SDK..."
+FLUTTER_DIR="$HOME/flutter"
 
-echo "==> Flutter version"
+if [ ! -d "$FLUTTER_DIR/bin" ]; then
+  echo "==> Downloading Flutter (stable)..."
+  git clone https://github.com/flutter/flutter.git -b stable --depth 1 "$FLUTTER_DIR"
+else
+  echo "==> Flutter already cached at $FLUTTER_DIR"
+fi
+
+export PATH="$FLUTTER_DIR/bin:$PATH"
+
+echo "==> Flutter version:"
 flutter --version --no-version-check
 
-echo "==> Accepting licenses & pre-caching web tools"
+echo "==> Pre-caching Web artifacts..."
 flutter config --enable-web
 flutter precache --web
 
-echo "==> Getting packages"
+echo "==> Getting packages..."
 flutter pub get
 
-echo "==> Building Flutter Web (no-wasm)"
+echo "==> Building Flutter Web for Production..."
 flutter build web --release --no-wasm-dry-run
 
-echo "==> Done! build/web is ready."
+echo "==> Build successful! Artifacts ready in build/web"
+
